@@ -9,16 +9,17 @@ terraform {
 
 resource "hcloud_server" "instance" {
   name        = var.name
-  ssh_keys    = [var.ssh_key]
+  ssh_keys    = [var.hcloud_ssh_key]
   image       = var.image
   location    = var.location
   server_type = var.server_type
 
   connection {
     host        = hcloud_server.instance.ipv4_address
+    type        = "ssh"
     timeout     = "5m"
     user        = "root"
-    private_key = file("~/.ssh/id_rsa")
+    private_key = file(var.ssh_private_key_path)
   }
 
   provisioner "file" {
@@ -44,7 +45,7 @@ module "kubeconfig" {
   source     = "matti/resource/shell"
   depends_on = [hcloud_server.instance]
 
-  trigger = hcloud_server.instance.ipv4_address
+  trigger = hcloud_server.instance.id
 
   command = <<EOT
     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \

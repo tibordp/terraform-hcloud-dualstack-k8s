@@ -30,7 +30,7 @@ module "dualstack_cluster" {
   source = "./.."
 
   name               = "k8s"
-  ssh_key            = hcloud_ssh_key.key.id
+  hcloud_ssh_key     = hcloud_ssh_key.key.id
   hcloud_token       = var.hetzner_token
   location           = "hel1"
   master_server_type = "cx31"

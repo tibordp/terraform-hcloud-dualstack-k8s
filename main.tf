@@ -3,8 +3,8 @@ variable "name" {
   type        = string
 }
 
-variable "ssh_key" {
-  description = "SSH key name"
+variable "hcloud_ssh_key" {
+  description = "SSH key name or ID"
   type        = string
 }
 
@@ -42,15 +42,23 @@ variable "location" {
   default     = "hel1"
 }
 
+variable "ssh_private_key_path" {
+  description = "SSH public key file path"
+  type        = string
+  default     = "~/.ssh/id_rsa"
+}
+
 module "master" {
   source = "./modules/k8s-master"
 
-  name         = "${var.name}-master"
-  ssh_key      = var.ssh_key
-  hcloud_token = var.hcloud_token
-  server_type  = var.master_server_type
-  image        = var.image
-  location     = var.location
+  name           = "${var.name}-master"
+  hcloud_ssh_key = var.hcloud_ssh_key
+  hcloud_token   = var.hcloud_token
+  server_type    = var.master_server_type
+  image          = var.image
+  location       = var.location
+
+  ssh_private_key_path = var.ssh_private_key_path
 }
 
 module "worker" {
@@ -58,11 +66,13 @@ module "worker" {
   source = "./modules/k8s-worker"
 
   name              = "${var.name}-worker-${count.index}"
-  ssh_key           = var.ssh_key
+  hcloud_ssh_key    = var.hcloud_ssh_key
   master_ip_address = module.master.ipv4_address
   server_type       = var.worker_server_type
   image             = var.image
   location          = var.location
+
+  ssh_private_key_path = var.ssh_private_key_path
 }
 
 output "apiserver_ipv4_address" {
@@ -79,3 +89,4 @@ output "kubeconfig" {
   description = "kubeconfig for the cluster"
   value       = module.master.kubeconfig
 }
+
