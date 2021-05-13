@@ -3,8 +3,8 @@ variable "name" {
   type        = string
 }
 
-variable "ssh_key" {
-  description = "SSH key name"
+variable "hcloud_ssh_key" {
+  description = "SSH key name or ID"
   type        = string
 }
 
@@ -25,5 +25,10 @@ variable "image" {
 
 variable "location" {
   description = "Server location"
+  type        = string
+}
+
+variable "ssh_private_key_path" {
+  description = "SSH public key file path"
   type        = string
 }

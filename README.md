@@ -1,12 +1,12 @@
 Hetzner Dual-Stack Kubernetes Cluster
 =====================================
 
-Unofficial Terraform module to provide a simple dual-stack Kubernetes cluster in Hetzner Cloud
+Unofficial Terraform module to provide a simple dual-stack Kubernetes cluster in Hetzner Cloud.
 
 Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs), with the following features:
 
 - Single master node
-- containerd for CNI
+- containerd for CRI
 - Cilium for CNI
 - Uses ULA IPv6 addresses in the cluster and masquerades them for egress connectivity (yuk). In the future I'd like to tap into Cilium to use the /64 that is allocated to every node for pod IP addresses (dunno if possible) and only use private IPs for Services.
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers
@@ -30,7 +30,7 @@ module "dualstack_cluster" {
   source = "./.."
 
   name               = "k8s"
-  ssh_key            = hcloud_ssh_key.key.id
+  hcloud_ssh_key     = hcloud_ssh_key.key.id
   hcloud_token       = var.hetzner_token
   location           = "hel1"
   master_server_type = "cx31"
