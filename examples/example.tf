@@ -8,6 +8,7 @@ terraform {
 }
 
 locals {
+  # Don't do this, put the token in vars
   hetzner_token = "<token>"
 }
 
@@ -16,7 +17,7 @@ provider "hcloud" {
 }
 
 resource "hcloud_ssh_key" "key" {
-  name       = "philomena"
+  name       = "key"
   public_key = file("~/.ssh/id_rsa.pub")
 }
 

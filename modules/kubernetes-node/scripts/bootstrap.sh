@@ -16,7 +16,6 @@ net.ipv4.ip_forward                 = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 
-# Apply sysctl params without reboot
 sudo sysctl --system
 
 # Install CRI
@@ -40,6 +39,7 @@ echo \
 sudo apt-get update
 sudo apt-get install -y containerd.io
 
+# Enable systemd cgroups driver
 sudo mkdir -p /etc/containerd
 containerd config default | \
   perl -i -pe 's/(\s+)(\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\])/\1\2\n\1  SystemdCgroup = true/g' | \

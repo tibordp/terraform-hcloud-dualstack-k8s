@@ -1,5 +1,5 @@
 variable "name" {
-  description = "Name of the master"
+  description = "Name of the instance"
   type        = string
 }
 
@@ -10,11 +10,6 @@ variable "hcloud_ssh_key" {
 
 variable "server_type" {
   description = "Server SKU"
-  type        = string
-}
-
-variable "hcloud_token" {
-  description = "Hetzner token for CCM and storage provisioner"
   type        = string
 }
 
@@ -31,4 +26,9 @@ variable "location" {
 variable "ssh_private_key_path" {
   description = "SSH public key file path"
   type        = string
+}
+
+variable "v4_subnet_index" {
+  description = "IPv4 node pod CIDR index"
+  type        = number
 }
