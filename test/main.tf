@@ -13,11 +13,16 @@ provider "hcloud" {
   token = var.hetzner_token
 }
 
+resource "hcloud_ssh_key" "key" {
+  name       = "key"
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+
 module "simple_cluster" {
   source = "./.."
 
   name               = "test"
-  hcloud_ssh_key     = "philomena"
+  hcloud_ssh_key     = hcloud_ssh_key.key.id
   hcloud_token       = var.hetzner_token
   location           = "hel1"
   master_server_type = "cx21"
@@ -31,7 +36,7 @@ module "ha_cluster" {
   source = "./.."
 
   name               = "test"
-  hcloud_ssh_key     = "philomena"
+  hcloud_ssh_key     = hcloud_ssh_key.key.id
   hcloud_token       = var.hetzner_token
   location           = "hel1"
   master_server_type = "cx21"
