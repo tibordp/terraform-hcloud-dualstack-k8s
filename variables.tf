@@ -25,6 +25,12 @@ variable "hcloud_token" {
   type        = string
 }
 
+variable "master_count" {
+  description = "Number of control plane nodes"
+  type        = number
+  default     = 1
+}
+
 variable "worker_count" {
   description = "Number of worker nodes"
   type        = number

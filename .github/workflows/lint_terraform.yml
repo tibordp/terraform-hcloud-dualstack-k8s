@@ -1,4 +1,4 @@
-name: 'Terraform'
+name: 'Lint Terraform'
 
 on:
   push:

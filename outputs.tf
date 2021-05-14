@@ -1,11 +1,11 @@
 output "apiserver_ipv4_address" {
   description = "IPv4 address of the API server"
-  value       = module.master.ipv4_address
+  value       = local.ha_control_plane ? hcloud_load_balancer.control_plane[0].ipv4 : module.master[0].ipv4_address
 }
 
 output "apiserver_ipv6_address" {
   description = "IPv6 address of the API server"
-  value       = module.master.ipv6_address
+  value       = local.ha_control_plane ? hcloud_load_balancer.control_plane[0].ipv6 : module.master[0].ipv6_address
 }
 
 output "client_certificate_data" {

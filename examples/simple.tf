@@ -7,10 +7,7 @@ terraform {
   }
 }
 
-locals {
-  # Don't do this, put the token in vars
-  hetzner_token = "<token>"
-}
+variable "hetzner_token" {}
 
 provider "hcloud" {
   token = local.hetzner_token
@@ -26,7 +23,7 @@ module "dualstack_cluster" {
 
   name               = "k8s"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
-  hcloud_token       = local.hetzner_token
+  hcloud_token       = vars.hetzner_token
   location           = "hel1"
   master_server_type = "cx31"
   worker_server_type = "cx31"

@@ -7,7 +7,7 @@ module "worker" {
   server_type          = var.worker_server_type
   image                = var.image
   location             = var.location
-  v4_subnet_index      = count.index + 1
+  v4_subnet_index      = 64 + count.index
   ssh_private_key_path = var.ssh_private_key_path
 }
 
@@ -15,7 +15,7 @@ resource "null_resource" "worker_init" {
   count = var.worker_count
 
   depends_on = [
-    null_resource.master_init,
+    null_resource.master_init
   ]
 
   connection {
@@ -29,7 +29,7 @@ resource "null_resource" "worker_init" {
   provisioner "local-exec" {
     command = <<EOT
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${module.master.ipv4_address} 'kubeadm token create $(kubeadm token generate) --print-join-command --ttl=60m' | \
+        root@${module.master[0].ipv4_address} 'kubeadm token create --print-join-command --ttl=60m' | \
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         root@${module.worker[count.index].ipv4_address}
     EOT
@@ -37,7 +37,7 @@ resource "null_resource" "worker_init" {
 
   provisioner "remote-exec" {
     connection {
-      host        = module.master.ipv4_address
+      host        = module.master[0].ipv4_address
       type        = "ssh"
       timeout     = "5m"
       user        = "root"

@@ -5,7 +5,7 @@ Unofficial Terraform module to build a basic dual-stack Kubernetes cluster in He
 
 Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs), with the following features:
 
-- Single master node 
+- Single or multiple control plane nodes (in [HA configuration with stacked `etcd`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/))
 - containerd for CRI
 - [Cilium](https://cilium.io/) for CNI
   - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic!
@@ -17,7 +17,6 @@ Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io
 
 While this module tries to follow Kuberentes best practices, exercise caution before using it in production, as it is not particularly hardened.
 
-- No multi-master/HA control plane support at this point (PRs welcome).
 - As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. If this is not desired, appropriate [Cilium network policy](https://docs.cilium.io/en/v1.10.0-rc1/policy/) or filtered at the edge through Hetzner firewall.
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs) for some workarounds.
 
@@ -44,6 +43,10 @@ module "dualstack_cluster" {
   location           = "hel1"
   master_server_type = "cx31"
   worker_server_type = "cx31"
+  
+  # More than 1 master will set up a HA topology with a load balancer for API server
+  master_count       = 1  
+  
   worker_count       = 2
 }
 
