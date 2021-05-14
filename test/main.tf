@@ -21,7 +21,7 @@ resource "hcloud_ssh_key" "key" {
 module "simple_cluster" {
   source = "./.."
 
-  name               = "test"
+  name               = "simple"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
   hcloud_token       = var.hetzner_token
   location           = "hel1"
@@ -35,7 +35,7 @@ module "simple_cluster" {
 module "ha_cluster" {
   source = "./.."
 
-  name               = "test"
+  name               = "ha"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
   hcloud_token       = var.hetzner_token
   location           = "hel1"
