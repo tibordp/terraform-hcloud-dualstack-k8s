@@ -11,7 +11,7 @@ module "worker" {
   ssh_private_key_path = var.ssh_private_key_path
 }
 
-resource "null_resource" "worker_init" {
+resource "null_resource" "worker_join" {
   count = var.worker_count
 
   depends_on = [

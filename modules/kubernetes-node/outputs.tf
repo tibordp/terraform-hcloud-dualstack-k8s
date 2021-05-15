@@ -14,7 +14,7 @@ output "ipv6_address" {
 }
 
 output "pod_cidrs" {
-  description = "Pod cidrs configuration"
+  description = "Per-node pod CIDR configuration"
   value = {
     "podCIDR" = cidrsubnet(hcloud_server.instance.ipv6_network, 16, 1),
     "podCIDRs" = [

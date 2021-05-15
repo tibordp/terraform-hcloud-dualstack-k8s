@@ -18,7 +18,7 @@ jobs:
 
     env:
       TF_VAR_hetzner_token: ${{ secrets.HETZNER_TOKEN }}
-      
+
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
@@ -39,6 +39,10 @@ jobs:
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
+      working-directory: test
+
+    - name: Verify 
+      run: ./test.sh
       working-directory: test
 
     - name: Terraform Destroy

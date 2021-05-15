@@ -28,7 +28,13 @@ module "ha_cluster" {
   master_server_type = "cx31"
   worker_server_type = "cx31"
   worker_count       = 3
-  master_count       = 3
+
+  control_plane = {
+    master_count       = 3
+    high_availability  = true
+    load_balancer_type = "lb11"
+  }
+
 }
 
 output "ha_cluster_kubeconfig" {

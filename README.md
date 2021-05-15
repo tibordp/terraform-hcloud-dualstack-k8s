@@ -19,6 +19,7 @@ While this module tries to follow Kuberentes best practices, exercise caution be
 
 - As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. If this is not desired, appropriate [Cilium network policy](https://docs.cilium.io/en/v1.10.0-rc1/policy/) or filtered at the edge through Hetzner firewall.
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs) for some workarounds.
+- Limited day-2 - changing the number of nodes is possible through Terraform only, but other changes to the cluster will likely result in having to recreate the cluster.
 
 # Getting Started
 
@@ -31,7 +32,7 @@ resource "hcloud_ssh_key" "key" {
 }
 ```
 
-Create a Kubernetes cluster:
+Create a simple Kubernetes cluster:
 
 ```hcl
 module "dualstack_cluster" {
@@ -43,13 +44,8 @@ module "dualstack_cluster" {
   location           = "hel1"
   master_server_type = "cx31"
   worker_server_type = "cx31"
-  
-  # More than 1 master will set up a HA topology with a load balancer for API server
-  master_count       = 1  
-  
   worker_count       = 2
 }
-
 
 output "kubeconfig" {
   value = module.dualstack_cluster.kubeconfig
@@ -72,7 +68,13 @@ k8s-worker-0   Ready    <none>                 31m   v1.21.1
 k8s-worker-1   Ready    <none>                 31m   v1.21.1
 ```
 
-## Chaining other terraform modules
+## High availability setup
+
+This module can create a multi-master setup with a highly available control plane using a load balancer. To enable high availability, set `control_plane.high_availability` to `true`. It is important to set this to `true` even for a single master node if it is likely that the cluster will be grown later as it is not possible to change it later through Terraform only.
+
+See [here](./examples/ha_control_plane.tf) for an example of usage.
+
+## Chaining other Terraform modules
 
 TLS certificate credentials form the output can be used to chain other Terraform modules, such as the [Kubernetes provider](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs):
 
@@ -81,9 +83,9 @@ TLS certificate credentials form the output can be used to chain other Terraform
 provider "kubernetes" {
   host = "https://${module.dualstack_cluster.apiserver_ipv4_address}:6443"
 
-  client_certificate     = base64decode(module.dualstack_cluster.client_certificate_data)
-  client_key             = base64decode(module.dualstack_cluster.client_key_data)
-  cluster_ca_certificate = base64decode(module.dualstack_cluster.client_certificate_data)
+  client_certificate     = module.dualstack_cluster.client_certificate_data
+  client_key             = module.dualstack_cluster.client_key_data
+  cluster_ca_certificate = module.dualstack_cluster.certificate_authority_data
 }
 ```
 

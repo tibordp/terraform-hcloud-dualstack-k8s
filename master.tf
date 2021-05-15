@@ -1,10 +1,5 @@
-locals {
-  ha_control_plane = var.master_count > 1
-  ha_params        = local.ha_control_plane ? "APISERVER_ENDPOINT='${hcloud_load_balancer.control_plane[0].ipv4}' CERTIFICATE_KEY='${module.certificate_key[0].stdout}'" : ""
-}
-
 module "master" {
-  count  = var.master_count
+  count  = var.control_plane.master_count
   source = "./modules/kubernetes-node"
 
   name            = "${var.name}-master-${count.index}"
@@ -19,7 +14,7 @@ module "master" {
 
 
 module "certificate_key" {
-  count      = local.ha_control_plane ? 1 : 0
+  count      = var.control_plane.high_availability ? 1 : 0
   source     = "matti/resource/shell"
   depends_on = [module.master]
 
@@ -29,6 +24,17 @@ module "certificate_key" {
     ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
       root@${module.master[0].ipv4_address} 'kubeadm certs certificate-key'
   EOT
+}
+
+data "template_file" "kubeadm" {
+  template = file("${path.module}/templates/kubeadm.yaml.tpl")
+  vars = {
+    ha_control_plane       = var.control_plane.high_availability
+    certificate_key        = var.control_plane.high_availability ? module.certificate_key[0].stdout : ""
+    control_plane_endpoint = var.control_plane.high_availability ? hcloud_load_balancer.control_plane[0].ipv4 : ""
+    service_cidr_ipv4      = var.service_cidr_ipv4
+    service_cidr_ipv6      = var.service_cidr_ipv6
+  }
 }
 
 resource "null_resource" "master_init" {
@@ -49,10 +55,15 @@ resource "null_resource" "master_init" {
     destination = "/root/cluster-init.sh"
   }
 
+  provisioner "file" {
+    content     = data.template_file.kubeadm.rendered
+    destination = "/root/cluster.yaml"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "chmod +x /root/cluster-init.sh",
-      "${local.ha_params} /root/cluster-init.sh",
+      "HA_CONTROL_PLANE=${var.control_plane.high_availability ? 1 : 0} /root/cluster-init.sh",
     ]
   }
 
@@ -64,14 +75,14 @@ resource "null_resource" "master_init" {
 }
 
 resource "hcloud_load_balancer" "control_plane" {
-  count              = local.ha_control_plane ? 1 : 0
+  count              = var.control_plane.high_availability ? 1 : 0
   name               = "${var.name}-control-plane"
-  load_balancer_type = "lb11"
+  load_balancer_type = var.control_plane.load_balancer_type
   location           = var.location
 }
 
 resource "hcloud_load_balancer_service" "control_plane" {
-  count            = local.ha_control_plane ? 1 : 0
+  count            = var.control_plane.high_availability ? 1 : 0
   load_balancer_id = hcloud_load_balancer.control_plane[0].id
   listen_port      = 6443
   destination_port = 6443
@@ -79,7 +90,7 @@ resource "hcloud_load_balancer_service" "control_plane" {
 }
 
 resource "hcloud_load_balancer_target" "control_plane_target" {
-  count            = local.ha_control_plane ? var.master_count : 0
+  count            = var.control_plane.high_availability ? var.control_plane.master_count : 0
   type             = "server"
   load_balancer_id = hcloud_load_balancer.control_plane[0].id
   server_id        = module.master[count.index].id
@@ -113,7 +124,7 @@ resource "null_resource" "setup_cluster" {
 
 
 resource "null_resource" "master_join" {
-  count = local.ha_control_plane ? var.master_count - 1 : 0
+  count = var.control_plane.high_availability ? var.control_plane.master_count - 1 : 0
 
   depends_on = [
     null_resource.master_init

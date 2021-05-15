@@ -1,12 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ -z "$HCLOUD_TOKEN" ]
-then
-    echo "\$HCLOUD_TOKEN is empty"
-    exit 1
-fi
-
 # Install CNI
 curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
 sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin

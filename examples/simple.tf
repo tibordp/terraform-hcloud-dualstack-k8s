@@ -10,7 +10,7 @@ terraform {
 variable "hetzner_token" {}
 
 provider "hcloud" {
-  token = local.hetzner_token
+  token = vars.hetzner_token
 }
 
 resource "hcloud_ssh_key" "key" {
@@ -30,6 +30,6 @@ module "dualstack_cluster" {
   worker_count       = 2
 }
 
-output "kubeconfig" {
+output "simple_kubeconfig" {
   value = module.dualstack_cluster.kubeconfig
 }
