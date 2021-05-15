@@ -42,7 +42,7 @@ jobs:
       working-directory: test
 
     - name: Verify 
-      run: ./test.sh
+      run: ./ping.sh
       working-directory: test
 
     - name: Terraform Destroy
