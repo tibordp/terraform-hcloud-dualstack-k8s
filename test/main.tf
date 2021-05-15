@@ -33,7 +33,7 @@ module "simple_cluster" {
   master_server_type = "cx21"
   worker_server_type = "cx21"
 
-  worker_count = 2
+  worker_count = 1
 }
 
 module "ha_cluster" {
@@ -46,7 +46,7 @@ module "ha_cluster" {
   master_server_type = "cx21"
   worker_server_type = "cx21"
 
-  worker_count = 2
+  worker_count = 1
   control_plane = {
     master_count       = 2
     high_availability  = true
