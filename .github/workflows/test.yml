@@ -7,11 +7,10 @@ on:
     branches: [ master ]
 
 jobs:
-  terraform:
+  deploy-terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
 
-    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
         shell: bash
@@ -20,29 +19,21 @@ jobs:
       TF_VAR_hetzner_token: ${{ secrets.HETZNER_TOKEN }}
 
     steps:
-    # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v2
 
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1    
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Generate SSH keypair
       run: ssh-keygen -b 2048 -t rsa -f  ~/.ssh/id_rsa -q -N ""
 
-    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init
       working-directory: test
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
-      working-directory: test
-
-    - name: Verify 
-      run: ./ping.sh
       working-directory: test
 
     - name: Terraform Destroy
