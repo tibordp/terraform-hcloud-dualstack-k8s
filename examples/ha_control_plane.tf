@@ -7,13 +7,10 @@ terraform {
   }
 }
 
-locals {
-  # Don't do this, put the token in vars
-  hetzner_token = "<token>"
-}
+variable "hetzner_token" {}
 
 provider "hcloud" {
-  token = local.hetzner_token
+  token = var.hetzner_token
 }
 
 resource "hcloud_ssh_key" "key" {
@@ -21,18 +18,25 @@ resource "hcloud_ssh_key" "key" {
   public_key = file("~/.ssh/id_rsa.pub")
 }
 
-module "dualstack_cluster" {
+module "ha_cluster" {
   source = "./.."
 
   name               = "k8s"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
-  hcloud_token       = local.hetzner_token
+  hcloud_token       = var.hetzner_token
   location           = "hel1"
   master_server_type = "cx31"
   worker_server_type = "cx31"
-  worker_count       = 2
+  worker_count       = 3
+
+  control_plane = {
+    master_count       = 3
+    high_availability  = true
+    load_balancer_type = "lb11"
+  }
+
 }
 
-output "kubeconfig" {
+output "ha_cluster_kubeconfig" {
   value = module.dualstack_cluster.kubeconfig
 }

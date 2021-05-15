@@ -1,0 +1,42 @@
+name: 'Test Terraform on Hetzner'
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  deploy-terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      TF_VAR_hetzner_token: ${{ secrets.HETZNER_TOKEN }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1    
+
+    - name: Generate SSH keypair
+      run: ssh-keygen -b 2048 -t rsa -f  ~/.ssh/id_rsa -q -N ""
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: test
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+      working-directory: test
+
+    - name: Terraform Destroy
+      if: ${{ always() }}
+      run: terraform destroy -auto-approve
+      working-directory: test
