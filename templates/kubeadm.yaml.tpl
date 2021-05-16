@@ -7,6 +7,9 @@ apiVersion: kubeadm.k8s.io/v1beta2
 %{ if ha_control_plane }
 certificateKey: "${certificate_key}"
 %{ endif }
+localAPIEndpoint:
+  advertiseAddress: "${advertise_address}"
+  bindPort: 6443
 ---
 kind: ClusterConfiguration
 apiVersion: kubeadm.k8s.io/v1beta2

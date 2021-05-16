@@ -7,6 +7,11 @@ terraform {
   }
 }
 
+locals {
+  pod_subnet_v4 = cidrsubnet("10.0.0.0/8", 10, var.node_index + 1)
+  pod_subnet_v6 = cidrsubnet(hcloud_server.instance.ipv6_network, 16, 1)
+}
+
 resource "hcloud_server" "instance" {
   name        = var.name
   ssh_keys    = [var.hcloud_ssh_key]

@@ -28,7 +28,7 @@ variable "ssh_private_key_path" {
   type        = string
 }
 
-variable "v4_subnet_index" {
+variable "node_index" {
   description = "IPv4 node pod CIDR index"
   type        = number
 }

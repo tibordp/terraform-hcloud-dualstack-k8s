@@ -1,20 +1,25 @@
+locals {
+  high_availability      = var.control_plane_endpoint != "" || var.master_count > 1 || var.control_plane_lb_type != ""
+  control_plane_endpoint = local.high_availability ? (var.control_plane_endpoint != "" ? var.control_plane_endpoint : hcloud_load_balancer.control_plane[0].ipv4) : ""
+}
+
 module "master" {
-  count  = var.control_plane.master_count
+  count  = var.master_count
   source = "./modules/kubernetes-node"
 
-  name            = "${var.name}-master-${count.index}"
-  hcloud_ssh_key  = var.hcloud_ssh_key
-  server_type     = var.master_server_type
-  image           = var.image
-  location        = var.location
-  v4_subnet_index = count.index
+  name           = "${var.name}-master-${count.index}"
+  hcloud_ssh_key = var.hcloud_ssh_key
+  server_type    = var.master_server_type
+  image          = var.image
+  location       = var.location
+  node_index     = count.index
 
   ssh_private_key_path = var.ssh_private_key_path
 }
 
 
 module "certificate_key" {
-  count      = var.control_plane.high_availability ? 1 : 0
+  count      = local.high_availability ? 1 : 0
   source     = "matti/resource/shell"
   depends_on = [module.master]
 
@@ -29,9 +34,10 @@ module "certificate_key" {
 data "template_file" "kubeadm" {
   template = file("${path.module}/templates/kubeadm.yaml.tpl")
   vars = {
-    ha_control_plane       = var.control_plane.high_availability
-    certificate_key        = var.control_plane.high_availability ? module.certificate_key[0].stdout : ""
-    control_plane_endpoint = var.control_plane.high_availability ? hcloud_load_balancer.control_plane[0].ipv4 : ""
+    ha_control_plane       = local.high_availability
+    certificate_key        = local.high_availability ? module.certificate_key[0].stdout : ""
+    control_plane_endpoint = local.high_availability ? local.control_plane_endpoint : ""
+    advertise_address      = module.master[0].ipv4_address
     service_cidr_ipv4      = var.service_cidr_ipv4
     service_cidr_ipv6      = var.service_cidr_ipv6
   }
@@ -63,37 +69,18 @@ resource "null_resource" "master_init" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /root/cluster-init.sh",
-      "HA_CONTROL_PLANE=${var.control_plane.high_availability ? 1 : 0} /root/cluster-init.sh",
+      "HA_CONTROL_PLANE=${local.high_availability ? 1 : 0} /root/cluster-init.sh",
     ]
   }
 
   provisioner "remote-exec" {
     inline = [
-      "kubectl patch node '${var.name}-master-0' -p '${jsonencode({ "spec" = module.master[0].pod_cidrs })}'",
+      <<EOT
+      kubectl patch node '${var.name}-master-0' \
+        -p '${jsonencode({ "spec" = module.master[0].pod_cidrs })}'
+      EOT
     ]
   }
-}
-
-resource "hcloud_load_balancer" "control_plane" {
-  count              = var.control_plane.high_availability ? 1 : 0
-  name               = "${var.name}-control-plane"
-  load_balancer_type = var.control_plane.load_balancer_type
-  location           = var.location
-}
-
-resource "hcloud_load_balancer_service" "control_plane" {
-  count            = var.control_plane.high_availability ? 1 : 0
-  load_balancer_id = hcloud_load_balancer.control_plane[0].id
-  listen_port      = 6443
-  destination_port = 6443
-  protocol         = "tcp"
-}
-
-resource "hcloud_load_balancer_target" "control_plane_target" {
-  count            = var.control_plane.high_availability ? var.control_plane.master_count : 0
-  type             = "server"
-  load_balancer_id = hcloud_load_balancer.control_plane[0].id
-  server_id        = module.master[count.index].id
 }
 
 resource "null_resource" "setup_cluster" {
@@ -124,7 +111,7 @@ resource "null_resource" "setup_cluster" {
 
 
 resource "null_resource" "master_join" {
-  count = var.control_plane.high_availability ? var.control_plane.master_count - 1 : 0
+  count = local.high_availability ? var.master_count - 1 : 0
 
   depends_on = [
     null_resource.master_init
@@ -142,7 +129,11 @@ resource "null_resource" "master_join" {
     command = <<EOT
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         root@${module.master[0].ipv4_address} \
-        'echo $(kubeadm token create --print-join-command --ttl=60m) --control-plane --certificate-key ${module.certificate_key[0].stdout}' | \
+        'echo $(kubeadm token create --print-join-command --ttl=60m) \
+        --apiserver-advertise-address ${module.master[count.index + 1].ipv4_address} \
+        --control-plane \
+        --certificate-key ${module.certificate_key[0].stdout} \
+        --skip-phases control-plane-join' | \
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         root@${module.master[count.index + 1].ipv4_address}
     EOT
@@ -158,7 +149,21 @@ resource "null_resource" "master_join" {
     }
 
     inline = [
-      "kubectl patch node '${var.name}-master-${count.index + 1}' -p '${jsonencode({ "spec" = module.master[count.index + 1].pod_cidrs })}'",
+      <<EOT
+      kubectl patch node '${var.name}-master-${count.index + 1}' \
+        -p '${jsonencode({ "spec" = module.master[count.index + 1].pod_cidrs })}'
+      EOT
+    ]
+  }
+
+  # We need CNI to be operational on the node before we can complete the join
+  provisioner "remote-exec" {
+    inline = [
+      <<EOT
+      kubeadm join phase control-plane-join all \
+        --control-plane \
+        --apiserver-advertise-address ${module.master[count.index + 1].ipv4_address}
+      EOT
     ]
   }
 }

@@ -47,16 +47,12 @@ module "ha_cluster" {
   worker_server_type = "cx21"
 
   worker_count = 1
-  control_plane = {
-    master_count       = 2
-    high_availability  = true
-    load_balancer_type = "lb11"
-  }
+  master_count = 2
 }
 
 provider "kubernetes" {
   alias = "simple_cluster"
-  host  = "https://${module.simple_cluster.apiserver_ipv4_address}:6443"
+  host  = module.simple_cluster.apiserver_url
 
   client_certificate     = module.simple_cluster.client_certificate_data
   client_key             = module.simple_cluster.client_key_data
@@ -65,7 +61,7 @@ provider "kubernetes" {
 
 provider "kubernetes" {
   alias = "ha_cluster"
-  host  = "https://${module.ha_cluster.apiserver_ipv4_address}:6443"
+  host  = module.ha_cluster.apiserver_url
 
   client_certificate     = module.ha_cluster.client_certificate_data
   client_key             = module.ha_cluster.client_key_data
