@@ -32,3 +32,15 @@ variable "node_index" {
   description = "IPv4 node pod CIDR index"
   type        = number
 }
+
+variable "firewall_ids" {
+  description = "List of firewalls attached to this server"
+  type        = list(number)
+  default     = []
+}
+
+variable "labels" {
+  description = "Labels attached to the server"
+  type        = map(any)
+  default     = {}
+}

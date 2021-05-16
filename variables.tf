@@ -78,3 +78,15 @@ variable "ssh_private_key_path" {
   type        = string
   default     = "~/.ssh/id_rsa"
 }
+
+variable "firewall_ids" {
+  description = "List of firewalls attached to the servers of the cluster"
+  type        = list(number)
+  default     = []
+}
+
+variable "labels" {
+  description = "Additional labels"
+  type        = map(any)
+  default     = {}
+}

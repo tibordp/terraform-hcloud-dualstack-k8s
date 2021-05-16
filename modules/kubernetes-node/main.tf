@@ -19,6 +19,9 @@ resource "hcloud_server" "instance" {
   location    = var.location
   server_type = var.server_type
 
+  firewall_ids = var.firewall_ids
+  labels       = var.labels
+
   connection {
     host        = hcloud_server.instance.ipv4_address
     type        = "ssh"

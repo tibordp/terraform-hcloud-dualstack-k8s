@@ -14,6 +14,9 @@ module "master" {
   location       = var.location
   node_index     = count.index
 
+  labels       = merge(var.labels, { cluster = var.name, role = "master" })
+  firewall_ids = var.firewall_ids
+
   ssh_private_key_path = var.ssh_private_key_path
 }
 
@@ -117,12 +120,9 @@ resource "null_resource" "master_join" {
     null_resource.master_init
   ]
 
-  connection {
-    host        = module.master[count.index + 1].ipv4_address
-    type        = "ssh"
-    timeout     = "5m"
-    user        = "root"
-    private_key = file(var.ssh_private_key_path)
+  triggers = {
+    instance_id  = module.master[count.index + 1].id
+    ipv4_address = module.master[count.index + 1].ipv4_address
   }
 
   provisioner "local-exec" {
@@ -158,6 +158,14 @@ resource "null_resource" "master_join" {
 
   # We need CNI to be operational on the node before we can complete the join
   provisioner "remote-exec" {
+    connection {
+      host        = self.triggers.ipv4_address
+      type        = "ssh"
+      timeout     = "5m"
+      user        = "root"
+      private_key = file(var.ssh_private_key_path)
+    }
+
     inline = [
       <<EOT
       kubeadm join phase control-plane-join all \
@@ -165,5 +173,16 @@ resource "null_resource" "master_join" {
         --apiserver-advertise-address ${module.master[count.index + 1].ipv4_address}
       EOT
     ]
+  }
+
+  # It is important to leave the etcd quorum before shutting down the control plane node,
+  # as it will not be done automatically. This deprovisioner can only use the default ssh key due to
+  # https://github.com/hashicorp/terraform/issues/23679
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<EOT
+      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+        root@${self.triggers.ipv4_address} 'kubeadm reset --force --skip-phases cleanup-node'
+    EOT
   }
 }
