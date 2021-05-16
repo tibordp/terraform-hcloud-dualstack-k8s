@@ -9,6 +9,7 @@ Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io
 - [Cilium](https://cilium.io/) for CNI
   - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic!
   - Dual-stack and IPv6-only `Service`s get a private (ULA) IPv6 address
+  - Wireguard for pod-to-pod traffic encryption (Hetzner [private networks are [not encrypted](https://docs.hetzner.com/cloud/networks/faq/#is-traffic-inside-hetzner-cloud-networks-encrypted))
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers
 - deploys the [Container Storage Interface](https://github.com/hetznercloud/csi-driver) for dynamic provisioning of volumes
 

@@ -7,7 +7,7 @@ sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
 
 cilium install --version v1.10.0-rc1 \
   --ipam kubernetes \
-  --config enable-ipv6=true,enable-ipv6-masquerade=false,egress-masquerade-interfaces=eth0,ipam=kubernetes
+  --config enable-wireguard=true,enable-l7-proxy=false,enable-ipv6=true,enable-ipv6-masquerade=false,egress-masquerade-interfaces=eth0,ipam=kubernetes
 
 # Install cloud provider
 kubectl -n kube-system create secret generic hcloud --from-literal=token="$HCLOUD_TOKEN"
