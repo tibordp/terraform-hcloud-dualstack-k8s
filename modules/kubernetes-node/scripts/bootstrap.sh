@@ -13,6 +13,7 @@ sudo modprobe br_netfilter
 cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1
+net.ipv6.conf.all.forwarding        = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 
@@ -25,7 +26,8 @@ sudo apt-get install -y \
   ca-certificates \
   curl \
   gnupg \
-  lsb-release
+  lsb-release \
+  ipvsadm
 
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo \

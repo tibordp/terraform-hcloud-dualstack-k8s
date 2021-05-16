@@ -1,5 +1,4 @@
-Hetzner Dual-Stack Kubernetes Cluster
-=====================================
+# Hetzner Dual-Stack Kubernetes Cluster
 
 Unofficial Terraform module to build a basic dual-stack Kubernetes cluster in Hetzner Cloud.
 
@@ -13,15 +12,16 @@ Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers
 - deploys the [Container Storage Interface](https://github.com/hetznercloud/csi-driver) for dynamic provisioning of volumes
 
-# Some important notes
+## Some important notes
 
 While this module tries to follow Kuberentes best practices, exercise caution before using it in production, as it is not particularly hardened.
 
 - As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. If this is not desired, appropriate [Cilium network policy](https://docs.cilium.io/en/v1.10.0-rc1/policy/) or filtered at the edge through Hetzner firewall.
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs) for some workarounds.
-- Limited day-2 - changing the number of nodes is possible through Terraform only, but other changes to the cluster will likely result in having to recreate the cluster.
+- No cluster autoscaler support as the networking configuration is done in Terraform.
+- Limited day-2 operations - changing the number of nodes is possible through Terraform only, but other changes to the cluster will likely result in having to recreate the cluster.
 
-# Getting Started
+## Getting Started
 
 Configure the Hetzner Cloud provider according to the [documentation](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs) and provide a [Hetzner Cloud SSH key resource](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs/resources/ssh_key) to access the cluster machines:
 
@@ -35,7 +35,7 @@ resource "hcloud_ssh_key" "key" {
 Create a simple Kubernetes cluster:
 
 ```hcl
-module "dualstack_cluster" {
+module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
 
   name               = "k8s"
@@ -48,7 +48,7 @@ module "dualstack_cluster" {
 }
 
 output "kubeconfig" {
-  value = module.dualstack_cluster.kubeconfig
+  value = module.k8s.kubeconfig
 }
 ```
 
@@ -63,16 +63,17 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=demo-cluster.conf
 NAME           STATUS   ROLES                  AGE   VERSION
-k8s-master     Ready    control-plane,master   31m   v1.21.1
+k8s-master-0   Ready    control-plane,master   31m   v1.21.1
 k8s-worker-0   Ready    <none>                 31m   v1.21.1
 k8s-worker-1   Ready    <none>                 31m   v1.21.1
 ```
 
 ## High availability setup
 
-This module can create a multi-master setup with a highly available control plane using a load balancer. To enable high availability, set `control_plane.high_availability` to `true`. It is important to set this to `true` even for a single master node if it is likely that the cluster will be grown later as it is not possible to change it later through Terraform only.
+This module can create a multi-master setup with a highly available control plane. There are two options available:
 
-See [here](./examples/ha_control_plane.tf) for an example of usage.
+- A Hetzner load balancer in front of the control-plane nodes (see [example](./examples/ha_load_balancer.tf))
+- External load balancer (or a DNS-based solution). Whatever is specified in `control_plane_endpoint` will be used as a API server endpoint and it is up to you to make sure request are routed to the master nodes  (see [example](./examples/ha_dns_name.tf))
 
 ## Chaining other Terraform modules
 
@@ -81,11 +82,11 @@ TLS certificate credentials form the output can be used to chain other Terraform
 ```hcl
 
 provider "kubernetes" {
-  host = "https://${module.dualstack_cluster.apiserver_ipv4_address}:6443"
+  host = module.k8s.apiserver_url
 
-  client_certificate     = module.dualstack_cluster.client_certificate_data
-  client_key             = module.dualstack_cluster.client_key_data
-  cluster_ca_certificate = module.dualstack_cluster.certificate_authority_data
+  client_certificate     = module.k8s.client_certificate_data
+  client_key             = module.k8s.client_key_data
+  cluster_ca_certificate = module.k8s.certificate_authority_data
 }
 ```
 

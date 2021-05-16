@@ -1,3 +1,5 @@
+# A simple dual-stack cluster with a single master node
+
 terraform {
   required_providers {
     hcloud = {
@@ -18,8 +20,8 @@ resource "hcloud_ssh_key" "key" {
   public_key = file("~/.ssh/id_rsa.pub")
 }
 
-module "dualstack_cluster" {
-  source = "./.."
+module "k8s" {
+  source = "tibordp/dualstack-k8s/hcloud"
 
   name               = "k8s"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
@@ -31,5 +33,5 @@ module "dualstack_cluster" {
 }
 
 output "simple_kubeconfig" {
-  value = module.dualstack_cluster.kubeconfig
+  value = module.k8s.kubeconfig
 }

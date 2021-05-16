@@ -1,11 +1,21 @@
-output "apiserver_ipv4_address" {
-  description = "IPv4 address of the API server"
-  value       = var.control_plane.high_availability ? hcloud_load_balancer.control_plane[0].ipv4 : module.master[0].ipv4_address
+output "masters" {
+  description = "Master nodes"
+  value       = module.master
 }
 
-output "apiserver_ipv6_address" {
-  description = "IPv6 address of the API server"
-  value       = var.control_plane.high_availability ? hcloud_load_balancer.control_plane[0].ipv6 : module.master[0].ipv6_address
+output "workers" {
+  description = "Worker nodes"
+  value       = module.worker
+}
+
+output "load_balancer" {
+  description = "Worker nodes"
+  value       = local.use_load_balancer ? hcloud_load_balancer.control_plane[0] : null
+}
+
+output "apiserver_url" {
+  description = "URL for the API server"
+  value       = yamldecode(module.kubeconfig.stdout).clusters[0].cluster.server
 }
 
 output "client_certificate_data" {

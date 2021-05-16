@@ -26,30 +26,22 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
-variable "control_plane" {
-  description = "Number of control plane nodes"
+variable "master_count" {
+  description = "Hetzner token for CCM and storage provisioner"
+  type        = number
+  default     = 1
+}
 
-  type = object({
-    master_count       = number
-    high_availability  = bool
-    load_balancer_type = string
-  })
+variable "control_plane_lb_type" {
+  description = "Hetzner token for CCM and storage provisioner"
+  type        = string
+  default     = ""
+}
 
-  default = {
-    master_count       = 1
-    high_availability  = false
-    load_balancer_type = ""
-  }
-
-  validation {
-    condition     = var.control_plane.master_count > 0
-    error_message = "There must be at least one master node."
-  }
-
-  validation {
-    condition     = var.control_plane.master_count == 1 || var.control_plane.high_availability
-    error_message = "HA control plane must be enabled for multi-master setup."
-  }
+variable "control_plane_endpoint" {
+  description = "Optional DNS name for the control plane endpoint"
+  type        = string
+  default     = ""
 }
 
 variable "service_cidr_ipv6" {
