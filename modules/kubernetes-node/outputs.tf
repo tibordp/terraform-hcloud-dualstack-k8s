@@ -13,6 +13,11 @@ output "ipv6_address" {
   value       = hcloud_server.instance.ipv6_address
 }
 
+output "ipv6_network" {
+  description = "IPv6 network of the server"
+  value       = hcloud_server.instance.ipv6_network
+}
+
 output "pod_cidrs" {
   description = "Per-node pod CIDR configuration"
   value = {

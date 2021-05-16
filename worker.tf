@@ -8,7 +8,13 @@ module "worker" {
   image          = var.image
   location       = var.location
 
-  node_index = 64 + count.index
+  # Subnets for workers start at 32, to allow for the master
+  # count to be increased. 32 master nodes ought to be enough for
+  # everyone ;)
+  node_index = 32 + count.index
+
+  labels       = merge(var.labels, { cluster = var.name, role = "worker" })
+  firewall_ids = var.firewall_ids
 
   ssh_private_key_path = var.ssh_private_key_path
 }
@@ -19,6 +25,10 @@ resource "null_resource" "worker_join" {
   depends_on = [
     null_resource.master_init
   ]
+
+  triggers = {
+    instance_id = module.worker[count.index].id
+  }
 
   connection {
     host        = module.worker[count.index].ipv4_address

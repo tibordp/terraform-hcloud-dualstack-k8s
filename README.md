@@ -10,7 +10,7 @@ Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io
   - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic!
   - Dual-stack and IPv6-only `Service`s get a private (ULA) IPv6 address
   - Wireguard for pod-to-pod traffic encryption (Hetzner [private networks are [not encrypted](https://docs.hetzner.com/cloud/networks/faq/#is-traffic-inside-hetzner-cloud-networks-encrypted))
-- deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers
+- deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers and deleted nodes are cleaned up.
 - deploys the [Container Storage Interface](https://github.com/hetznercloud/csi-driver) for dynamic provisioning of volumes
 
 ## Some important notes
@@ -18,9 +18,13 @@ Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io
 While this module tries to follow Kuberentes best practices, exercise caution before using it in production, as it is not particularly hardened.
 
 - As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. If this is not desired, appropriate [Cilium network policy](https://docs.cilium.io/en/v1.10.0-rc1/policy/) or filtered at the edge through Hetzner firewall.
+- In a similar fashion, control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication, they can be locked down through [Cilium Host Policies](https://docs.cilium.io/en/v1.10.0-rc1/policy/language/#host-policies) or at edge.
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs) for some workarounds.
 - No cluster autoscaler support as the networking configuration is done in Terraform.
-- Limited day-2 operations - changing the number of nodes is possible through Terraform only, but other changes to the cluster will likely result in having to recreate the cluster.
+- Limited day-2 operations. The following are supported, but other changes will likely require the cluster to be recreated:
+   - Node replacement (with the exception of first master node)
+   - Vertical scaling of node (changing the server type)
+   - Horizontal scaling (changing node count) of both master and worker nodes 
 
 ## Getting Started
 
