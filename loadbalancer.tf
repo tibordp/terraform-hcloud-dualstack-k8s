@@ -1,11 +1,11 @@
 locals {
-  use_load_balancer = local.high_availability && (var.control_plane_lb_type != "" || var.control_plane_endpoint == "")
+  use_load_balancer = var.control_plane_lb_type != ""
 }
 
 resource "hcloud_load_balancer" "control_plane" {
   count              = local.use_load_balancer ? 1 : 0
   name               = "${var.name}-control-plane"
-  load_balancer_type = var.control_plane_lb_type != "" ? var.control_plane_lb_type : "lb11"
+  load_balancer_type = var.control_plane_lb_type
   location           = var.location
 }
 

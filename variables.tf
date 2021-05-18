@@ -90,3 +90,9 @@ variable "labels" {
   type        = map(any)
   default     = {}
 }
+
+variable "kubeadm_host" {
+  description = "(Optional) The control plane node to use for management operations"
+  type        = string
+  default     = ""
+}
