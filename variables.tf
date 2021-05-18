@@ -9,13 +9,13 @@ variable "hcloud_ssh_key" {
 }
 
 variable "master_server_type" {
-  description = "Server SKU"
+  description = "Server SKU (default: 'cx31')"
   type        = string
   default     = "cx31"
 }
 
 variable "worker_server_type" {
-  description = "Server SKU"
+  description = "Server SKU (default: 'cx31')"
   type        = string
   default     = "cx31"
 }
@@ -33,13 +33,13 @@ variable "master_count" {
 }
 
 variable "control_plane_lb_type" {
-  description = "Hetzner token for CCM and storage provisioner"
+  description = "(Optional) Hetzner token for CCM and storage provisioner"
   type        = string
   default     = ""
 }
 
 variable "control_plane_endpoint" {
-  description = "Optional DNS name for the control plane endpoint"
+  description = "(Optional) DNS name for the control plane endpoint"
   type        = string
   default     = ""
 }
@@ -62,31 +62,31 @@ variable "worker_count" {
 }
 
 variable "image" {
-  description = "Image for the nodes"
+  description = "Image for the nodes (default: 'hel1')"
   type        = string
   default     = "ubuntu-20.04"
 }
 
 variable "location" {
-  description = "Server location"
+  description = "Server location (default: 'hel1')"
   type        = string
   default     = "hel1"
 }
 
 variable "ssh_private_key_path" {
-  description = "SSH public key file path"
+  description = "SSH public key file path (default: '~/.ssh/id_rsa')"
   type        = string
   default     = "~/.ssh/id_rsa"
 }
 
 variable "firewall_ids" {
-  description = "List of firewalls attached to the servers of the cluster"
+  description = "(Optional) List of firewalls attached to the servers of the cluster"
   type        = list(number)
   default     = []
 }
 
 variable "labels" {
-  description = "Additional labels"
+  description = "(Optional) Additional labels"
   type        = map(any)
   default     = {}
 }
@@ -95,4 +95,10 @@ variable "kubeadm_host" {
   description = "(Optional) The control plane node to use for management operations"
   type        = string
   default     = ""
+}
+
+variable "apiserver_extra_sans" {
+  description = "(Optional) Extra SANs for the apiserver certificate"
+  type        = list(any)
+  default     = []
 }

@@ -1,7 +1,20 @@
 locals {
-  control_plane_endpoint_v6 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv6}]" : "[${module.master[0].ipv6_address}]")
-  control_plane_endpoint_v4 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv4}]" : "[${module.master[0].ipv4_address}]")
-  kubeadm_host              = var.kubeadm_host != "" ? var.kubeadm_host : module.master[0].ipv4_address
+  control_plane_endpoint_v6 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? hcloud_load_balancer.control_plane[0].ipv6 : module.master[0].ipv6_address)
+
+  control_plane_endpoint_v4 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? hcloud_load_balancer.control_plane[0].ipv4 : module.master[0].ipv4_address)
+
+  control_plane_endpoint = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv6}]" : "[${module.master[0].ipv6_address}]")
+
+
+  # If using IP as an apiserver endpoint, add also the IPv4 SAN to the TLS certificate
+  apiserver_cert_sans = concat(var.control_plane_endpoint != "" ? [
+    var.control_plane_endpoint
+    ] : [
+    local.control_plane_endpoint_v4,
+    local.control_plane_endpoint_v6
+  ], var.apiserver_extra_sans)
+
+  kubeadm_host = var.kubeadm_host != "" ? var.kubeadm_host : module.master[0].ipv4_address
 }
 
 module "master" {
@@ -25,16 +38,6 @@ resource "random_id" "certificate_key" {
   byte_length = 32
 }
 
-data "template_file" "kubeadm" {
-  template = file("${path.module}/templates/kubeadm.yaml.tpl")
-  vars = {
-    certificate_key        = random_id.certificate_key.hex
-    control_plane_endpoint = local.control_plane_endpoint_v6
-    advertise_address      = module.master[0].ipv6_address
-    service_cidr_ipv4      = var.service_cidr_ipv4
-    service_cidr_ipv6      = var.service_cidr_ipv6
-  }
-}
 
 data "template_file" "master_cni" {
   count    = var.master_count
@@ -65,7 +68,14 @@ resource "null_resource" "cluster_bootstrap" {
   }
 
   provisioner "file" {
-    content     = data.template_file.kubeadm.rendered
+    content = templatefile("${path.module}/templates/kubeadm.yaml.tpl", {
+      apiserverCertSans      = local.apiserver_cert_sans
+      certificate_key        = random_id.certificate_key.hex
+      control_plane_endpoint = local.control_plane_endpoint
+      advertise_address      = module.master[0].ipv6_address
+      service_cidr_ipv4      = var.service_cidr_ipv4
+      service_cidr_ipv6      = var.service_cidr_ipv6
+    })
     destination = "/root/cluster.yaml"
   }
 

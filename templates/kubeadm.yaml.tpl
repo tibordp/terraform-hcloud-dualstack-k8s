@@ -14,6 +14,11 @@ apiVersion: kubeadm.k8s.io/v1beta2
 kubernetesVersion: v1.21.0
 featureGates:
   IPv6DualStack: true
+apiServer:
+  certSANs:
+%{ for san in apiserverCertSans ~}
+  - "${san}"
+%{ endfor ~}
 controllerManager:
   extraArgs:
     node-cidr-mask-size-ipv4: "24"
