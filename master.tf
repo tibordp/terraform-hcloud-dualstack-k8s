@@ -1,6 +1,20 @@
 locals {
-  high_availability      = var.control_plane_endpoint != "" || var.master_count > 1 || var.control_plane_lb_type != ""
-  control_plane_endpoint = local.high_availability ? (var.control_plane_endpoint != "" ? var.control_plane_endpoint : hcloud_load_balancer.control_plane[0].ipv4) : ""
+  control_plane_endpoint_v6 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? hcloud_load_balancer.control_plane[0].ipv6 : module.master[0].ipv6_address)
+
+  control_plane_endpoint_v4 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? hcloud_load_balancer.control_plane[0].ipv4 : module.master[0].ipv4_address)
+
+  control_plane_endpoint = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv6}]" : "[${module.master[0].ipv6_address}]")
+
+
+  # If using IP as an apiserver endpoint, add also the IPv4 SAN to the TLS certificate
+  apiserver_cert_sans = concat(var.control_plane_endpoint != "" ? [
+    var.control_plane_endpoint
+    ] : [
+    local.control_plane_endpoint_v4,
+    local.control_plane_endpoint_v6
+  ], var.apiserver_extra_sans)
+
+  kubeadm_host = var.kubeadm_host != "" ? var.kubeadm_host : module.master[0].ipv4_address
 }
 
 module "master" {
@@ -20,37 +34,21 @@ module "master" {
   ssh_private_key_path = var.ssh_private_key_path
 }
 
-
-module "certificate_key" {
-  count      = local.high_availability ? 1 : 0
-  source     = "matti/resource/shell"
-  depends_on = [module.master]
-
-  trigger = module.master[0].id
-
-  command = <<EOT
-    ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-      root@${module.master[0].ipv4_address} 'kubeadm certs certificate-key'
-  EOT
+resource "random_id" "certificate_key" {
+  byte_length = 32
 }
 
-data "template_file" "kubeadm" {
-  template = file("${path.module}/templates/kubeadm.yaml.tpl")
+
+data "template_file" "master_cni" {
+  count    = var.master_count
+  template = file("${path.module}/templates/cni.json.tpl")
   vars = {
-    ha_control_plane       = local.high_availability
-    certificate_key        = local.high_availability ? module.certificate_key[0].stdout : ""
-    control_plane_endpoint = local.high_availability ? local.control_plane_endpoint : ""
-    advertise_address      = module.master[0].ipv4_address
-    service_cidr_ipv4      = var.service_cidr_ipv4
-    service_cidr_ipv6      = var.service_cidr_ipv6
+    pod_subnet_v6 = module.master[count.index].pod_subnet_v6
+    pod_subnet_v4 = module.master[count.index].pod_subnet_v4
   }
 }
 
-resource "null_resource" "master_init" {
-  depends_on = [
-    module.certificate_key
-  ]
-
+resource "null_resource" "cluster_bootstrap" {
   connection {
     host        = module.master[0].ipv4_address
     type        = "ssh"
@@ -65,34 +63,43 @@ resource "null_resource" "master_init" {
   }
 
   provisioner "file" {
-    content     = data.template_file.kubeadm.rendered
+    content     = data.template_file.master_cni[0].rendered
+    destination = "/etc/cni/net.d/10-tibornet.conflist"
+  }
+
+  provisioner "file" {
+    content = templatefile("${path.module}/templates/kubeadm.yaml.tpl", {
+      apiserverCertSans      = local.apiserver_cert_sans
+      certificate_key        = random_id.certificate_key.hex
+      control_plane_endpoint = local.control_plane_endpoint
+      advertise_address      = module.master[0].ipv6_address
+      service_cidr_ipv4      = var.service_cidr_ipv4
+      service_cidr_ipv6      = var.service_cidr_ipv6
+    })
     destination = "/root/cluster.yaml"
   }
 
   provisioner "remote-exec" {
     inline = [
       "chmod +x /root/cluster-init.sh",
-      "HA_CONTROL_PLANE=${local.high_availability ? 1 : 0} /root/cluster-init.sh",
-    ]
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      <<EOT
-      kubectl patch node '${var.name}-master-0' \
-        -p '${jsonencode({ "spec" = module.master[0].pod_cidrs })}'
-      EOT
+      "/root/cluster-init.sh",
     ]
   }
 }
 
-resource "null_resource" "setup_cluster" {
+resource "null_resource" "master_join" {
+  count = var.master_count
+
   depends_on = [
-    null_resource.master_init
+    null_resource.cluster_bootstrap
   ]
 
+  triggers = {
+    instance_id = module.master[count.index].id
+  }
+
   connection {
-    host        = module.master[0].ipv4_address
+    host        = module.master[count.index].ipv4_address
     type        = "ssh"
     timeout     = "5m"
     user        = "root"
@@ -100,89 +107,32 @@ resource "null_resource" "setup_cluster" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/cluster-setup.sh"
-    destination = "/root/cluster-setup.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /root/cluster-setup.sh",
-      "HCLOUD_TOKEN='${var.hcloud_token}' /root/cluster-setup.sh",
-    ]
-  }
-}
-
-
-resource "null_resource" "master_join" {
-  count = local.high_availability ? var.master_count - 1 : 0
-
-  depends_on = [
-    null_resource.master_init
-  ]
-
-  triggers = {
-    instance_id  = module.master[count.index + 1].id
-    ipv4_address = module.master[count.index + 1].ipv4_address
+    content     = data.template_file.master_cni[count.index].rendered
+    destination = "/etc/cni/net.d/10-tibornet.conflist"
   }
 
   provisioner "local-exec" {
     command = <<EOT
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${module.master[0].ipv4_address} \
+        root@${local.kubeadm_host} \
         'echo $(kubeadm token create --print-join-command --ttl=60m) \
-        --apiserver-advertise-address ${module.master[count.index + 1].ipv4_address} \
+        --apiserver-advertise-address ${module.master[count.index].ipv6_address} \
         --control-plane \
-        --certificate-key ${module.certificate_key[0].stdout} \
-        --skip-phases control-plane-join' | \
+        --certificate-key ${random_id.certificate_key.hex}' | \
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${module.master[count.index + 1].ipv4_address}
+        root@${module.master[count.index].ipv4_address} 'tee /root/join-command.sh'
     EOT
   }
 
-  provisioner "remote-exec" {
-    connection {
-      host        = module.master[0].ipv4_address
-      type        = "ssh"
-      timeout     = "5m"
-      user        = "root"
-      private_key = file(var.ssh_private_key_path)
-    }
-
-    inline = [
-      <<EOT
-      kubectl patch node '${var.name}-master-${count.index + 1}' \
-        -p '${jsonencode({ "spec" = module.master[count.index + 1].pod_cidrs })}'
-      EOT
-    ]
+  provisioner "file" {
+    source      = "${path.module}/scripts/cluster-init.sh"
+    destination = "/root/cluster-init.sh"
   }
 
-  # We need CNI to be operational on the node before we can complete the join
   provisioner "remote-exec" {
-    connection {
-      host        = self.triggers.ipv4_address
-      type        = "ssh"
-      timeout     = "5m"
-      user        = "root"
-      private_key = file(var.ssh_private_key_path)
-    }
-
     inline = [
-      <<EOT
-      kubeadm join phase control-plane-join all \
-        --control-plane \
-        --apiserver-advertise-address ${module.master[count.index + 1].ipv4_address}
-      EOT
+      "chmod +x /root/cluster-init.sh",
+      "/root/cluster-init.sh",
     ]
-  }
-
-  # It is important to leave the etcd quorum before shutting down the control plane node,
-  # as it will not be done automatically. This deprovisioner can only use the default ssh key due to
-  # https://github.com/hashicorp/terraform/issues/23679
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<EOT
-      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${self.triggers.ipv4_address} 'kubeadm reset --force --skip-phases cleanup-node'
-    EOT
   }
 }

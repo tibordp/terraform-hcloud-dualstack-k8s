@@ -15,7 +15,7 @@ output "load_balancer" {
 
 output "apiserver_url" {
   description = "URL for the API server"
-  value       = yamldecode(module.kubeconfig.stdout).clusters[0].cluster.server
+  value       = "https://${local.control_plane_endpoint}:6443"
 }
 
 output "client_certificate_data" {

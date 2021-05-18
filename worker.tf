@@ -19,11 +19,20 @@ module "worker" {
   ssh_private_key_path = var.ssh_private_key_path
 }
 
+data "template_file" "worker_cni" {
+  count    = var.worker_count
+  template = file("${path.module}/templates/cni.json.tpl")
+  vars = {
+    pod_subnet_v6 = module.worker[count.index].pod_subnet_v6
+    pod_subnet_v4 = module.worker[count.index].pod_subnet_v4
+  }
+}
+
 resource "null_resource" "worker_join" {
   count = var.worker_count
 
   depends_on = [
-    null_resource.master_init
+    null_resource.cluster_bootstrap
   ]
 
   triggers = {
@@ -38,29 +47,18 @@ resource "null_resource" "worker_join" {
     private_key = file(var.ssh_private_key_path)
   }
 
+  provisioner "file" {
+    content     = data.template_file.worker_cni[count.index].rendered
+    destination = "/etc/cni/net.d/10-tibornet.conflist"
+  }
+
+
   provisioner "local-exec" {
     command = <<EOT
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${module.master[0].ipv4_address} 'kubeadm token create --print-join-command --ttl=60m' | \
+        root@${local.kubeadm_host} 'kubeadm token create --print-join-command --ttl=60m' | \
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         root@${module.worker[count.index].ipv4_address}
     EOT
-  }
-
-  provisioner "remote-exec" {
-    connection {
-      host        = module.master[0].ipv4_address
-      type        = "ssh"
-      timeout     = "5m"
-      user        = "root"
-      private_key = file(var.ssh_private_key_path)
-    }
-
-    inline = [
-      <<EOT
-      kubectl patch node '${var.name}-worker-${count.index}' \
-        -p '${jsonencode({ "spec" = module.worker[count.index].pod_cidrs })}'
-      EOT
-    ]
   }
 }

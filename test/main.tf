@@ -46,13 +46,16 @@ module "ha_cluster" {
   master_server_type = "cx21"
   worker_server_type = "cx21"
 
+  control_plane_lb_type = "lb11"
+
   worker_count = 1
   master_count = 2
 }
 
 provider "kubernetes" {
   alias = "simple_cluster"
-  host  = module.simple_cluster.apiserver_url
+  # GitHub Actions does not have IPv6 connectivity, so we need to use IPv4 :/
+  host = "https://${module.simple_cluster.masters[0].ipv4_address}:6443"
 
   client_certificate     = module.simple_cluster.client_certificate_data
   client_key             = module.simple_cluster.client_key_data
@@ -61,7 +64,8 @@ provider "kubernetes" {
 
 provider "kubernetes" {
   alias = "ha_cluster"
-  host  = module.ha_cluster.apiserver_url
+  # GitHub Actions does not have IPv6 connectivity, so we need to use IPv4 :/
+  host = "https://${module.ha_cluster.load_balancer.ipv4}:6443"
 
   client_certificate     = module.ha_cluster.client_certificate_data
   client_key             = module.ha_cluster.client_key_data
