@@ -133,7 +133,7 @@ Exercise caution before using this module in production, as it is not particular
    - Node replacement (see notes below for control plane nodes)
    - Vertical scaling of node (changing the server type)
    - Horizontal scaling (changing node count) of both master and worker nodes.
-- No cluster autoscaler support as the networking setup is statically performed in Terraform.
+- No cluster autoscaler support as the networking routing is statically rendered in Terraform.
 
 ## Acknowledgements 
 
