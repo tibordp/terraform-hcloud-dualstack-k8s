@@ -54,8 +54,11 @@ module "ha_cluster" {
 
 provider "kubernetes" {
   alias = "simple_cluster"
-  # GitHub Actions does not have IPv6 connectivity. Shame.
-  host = module.simple_cluster.apiserver_url_v4
+  # GitHub Actions does not have IPv6 connectivity. Insecure needed since
+  # the API server does not have its IPv4 address in certificate SANs.
+  # Shaaaame!
+  insecure = true
+  host     = module.simple_cluster.apiserver_url_v4
 
   client_certificate     = module.simple_cluster.client_certificate_data
   client_key             = module.simple_cluster.client_key_data
@@ -64,8 +67,11 @@ provider "kubernetes" {
 
 provider "kubernetes" {
   alias = "ha_cluster"
-  # GitHub Actions does not have IPv6 connectivity. Shame.
-  host = module.ha_cluster.apiserver_url_v4
+  # GitHub Actions does not have IPv6 connectivity. Insecure needed since
+  # the API server does not have its IPv4 address in certificate SANs
+  # Shaaaame!
+  insecure = true
+  host     = module.ha_cluster.apiserver_url_v4
 
   client_certificate     = module.ha_cluster.client_certificate_data
   client_key             = module.ha_cluster.client_key_data
