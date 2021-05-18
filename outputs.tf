@@ -13,9 +13,14 @@ output "load_balancer" {
   value       = local.use_load_balancer ? hcloud_load_balancer.control_plane[0] : null
 }
 
-output "apiserver_url" {
+output "apiserver_url_v4" {
   description = "URL for the API server"
-  value       = yamldecode(module.kubeconfig.stdout).clusters[0].cluster.server
+  value       = "https://${local.control_plane_endpoint_v4}:6443"
+}
+
+output "apiserver_url_v6" {
+  description = "URL for the API server"
+  value       = "https://${local.control_plane_endpoint_v6}:6443"
 }
 
 output "client_certificate_data" {

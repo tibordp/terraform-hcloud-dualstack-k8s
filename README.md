@@ -113,7 +113,8 @@ TLS certificate credentials form the output can be used to chain other Terraform
 ```hcl
 
 provider "kubernetes" {
-  host = module.k8s.apiserver_url
+  host = module.k8s.apiserver_url_v6
+  # Or host = module.k8s.apiserver_url_v4 if you are on WSL2 :/
 
   client_certificate     = module.k8s.client_certificate_data
   client_key             = module.k8s.client_key_data

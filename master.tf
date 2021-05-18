@@ -1,6 +1,7 @@
 locals {
-  control_plane_endpoint = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv6}]" : "[${module.master[0].ipv6_address}]")
-  kubeadm_host           = var.kubeadm_host != "" ? var.kubeadm_host : module.master[0].ipv4_address
+  control_plane_endpoint_v6 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv6}]" : "[${module.master[0].ipv6_address}]")
+  control_plane_endpoint_v4 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv4}]" : "[${module.master[0].ipv4_address}]")
+  kubeadm_host              = var.kubeadm_host != "" ? var.kubeadm_host : module.master[0].ipv4_address
 }
 
 module "master" {
@@ -28,7 +29,7 @@ data "template_file" "kubeadm" {
   template = file("${path.module}/templates/kubeadm.yaml.tpl")
   vars = {
     certificate_key        = random_id.certificate_key.hex
-    control_plane_endpoint = local.control_plane_endpoint
+    control_plane_endpoint = local.control_plane_endpoint_v6
     advertise_address      = module.master[0].ipv6_address
     service_cidr_ipv4      = var.service_cidr_ipv4
     service_cidr_ipv6      = var.service_cidr_ipv6
