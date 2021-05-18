@@ -117,7 +117,7 @@ provider "kubernetes" {
   
   # For a single-master cluster, this will be an IPv6 URL. For IPv4, this can
   # also be used
-  # host = "https://${module.simple_cluster.master[0].ipv4_address}:6443"
+  # host = "https://${module.k8s.masters[0].ipv4_address}:6443"
 
   client_certificate     = module.k8s.client_certificate_data
   client_key             = module.k8s.client_key_data
