@@ -46,7 +46,7 @@ module "ha_cluster" {
   master_server_type = "cx21"
   worker_server_type = "cx21"
 
-  load_balancer_type = "lb11"
+  control_plane_lb_type = "lb11"
 
   worker_count = 1
   master_count = 2
