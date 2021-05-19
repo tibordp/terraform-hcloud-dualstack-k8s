@@ -8,10 +8,8 @@ module "worker" {
   image          = var.image
   location       = var.location
 
-  # Subnets for workers start at 32, to allow for the master
-  # count to be increased. 32 master nodes ought to be enough for
-  # everyone ;)
-  node_index = 32 + count.index
+  pool_index = 2
+  node_index = count.index
 
   labels       = merge(var.labels, { cluster = var.name, role = "worker" })
   firewall_ids = var.firewall_ids

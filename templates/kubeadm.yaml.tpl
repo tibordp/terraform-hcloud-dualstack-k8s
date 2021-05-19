@@ -21,13 +21,11 @@ apiServer:
 %{ endfor ~}
 controllerManager:
   extraArgs:
-    node-cidr-mask-size-ipv4: "24"
-    node-cidr-mask-size-ipv6: "120"
+    allocate-node-cidrs: "false"
 networking:
   serviceSubnet: ${service_cidr_ipv6},${service_cidr_ipv4}
 controlPlaneEndpoint: "${control_plane_endpoint}:6443"
 ---
 kind: KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
-# IPVS unfortunately breaks Hetzner LoadBalancer healthchecks
-# mode: ipvs
+mode: ipvs

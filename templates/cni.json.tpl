@@ -24,7 +24,8 @@
           ],
           [          
             {
-              "subnet": "${pod_subnet_v4}"
+              "subnet": "${pod_subnet_v4}",
+              "rangeStart": "${cidrhost(pod_subnet_v4, 2)}"
             }
           ]
         ]

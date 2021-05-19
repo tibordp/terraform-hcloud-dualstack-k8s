@@ -23,7 +23,7 @@ variable "worker_server_type" {
 variable "hcloud_token" {
   description = "Hetzner token for CCM and storage provisioner"
   type        = string
-  sensitive   = true
+  # sensitive   = true
 }
 
 variable "master_count" {
@@ -101,4 +101,10 @@ variable "apiserver_extra_sans" {
   description = "(Optional) Extra SANs for the apiserver certificate"
   type        = list(any)
   default     = []
+}
+
+variable "filter_ingress_ipv6" {
+  description = "Filter out ingress IPv6 traffic directed to pods (default: false)"
+  type        = bool
+  default     = false
 }

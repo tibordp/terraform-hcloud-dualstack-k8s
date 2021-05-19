@@ -3,6 +3,11 @@ resource "null_resource" "setup_cluster" {
     null_resource.cluster_bootstrap
   ]
 
+  triggers = {
+    filter_ingress_ipv6 = var.filter_ingress_ipv6
+    hcloud_token        = var.hcloud_token
+  }
+
   connection {
     host        = local.kubeadm_host
     type        = "ssh"
@@ -12,10 +17,11 @@ resource "null_resource" "setup_cluster" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/ip_masq_agent.yaml.tpl", {
+    content = templatefile("${path.module}/templates/firewall.yaml.tpl", {
       non_masquerade_ranges = ["10.0.0.0/8", var.service_cidr_ipv4]
+      filter_ingress_ipv6   = var.filter_ingress_ipv6
     })
-    destination = "/root/ip-masq-agent.yaml"
+    destination = "/root/firewall.yaml"
   }
 
   provisioner "file" {

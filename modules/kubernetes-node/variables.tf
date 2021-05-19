@@ -28,6 +28,11 @@ variable "ssh_private_key_path" {
   type        = string
 }
 
+variable "pool_index" {
+  description = "IPv4 node pool index"
+  type        = number
+}
+
 variable "node_index" {
   description = "IPv4 node pod CIDR index"
   type        = number
