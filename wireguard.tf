@@ -2,12 +2,10 @@ locals {
   wireguard_peers = [for i, server in concat(module.master, module.worker) : {
     public_key = server.wireguard_public_key
     allowed_ips = [
-      "${server.private_ipv4_address}/32",
       server.pod_subnet_v4,
       server.ipv6_network,
     ]
     routes = [
-      "${server.private_ipv4_address}/32",
       server.pod_subnet_v4,
       server.pod_subnet_v6,
     ]

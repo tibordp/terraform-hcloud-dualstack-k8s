@@ -129,7 +129,7 @@ provider "kubernetes" {
 
 Exercise caution before using this module in production, as it is not particularly hardened.
 
-- As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. This can be mitigated by attaching a Hetzner Cloud Firewall (which is a stateful firewall). Pod-to-pod communication is done through an encrypted tunnel (UDP port 51820), so other ingress IPv6 to pod subnets can safely be blocked at the edge without interfering with internal traffic.
+- As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. Pass `filter_ingress_ipv6 = True` to install iptables rules preventing ingress IPv6 traffic to pods (while still allowing all cluster-internal IPv6 traffic, egress traffic and ingress via exposed `Services` and host ports)
 - In a similar fashion, control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication
 - No `NetworkPolicy` support (if you can make it work, please let me know!)
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs) for some workarounds.
@@ -138,6 +138,7 @@ Exercise caution before using this module in production, as it is not particular
    - Vertical scaling of node (changing the server type)
    - Horizontal scaling (changing node count) of both master and worker nodes.
 - No cluster autoscaler support as the networking routing is statically rendered in Terraform.
+- As kube-proxy is configured to use IPVS mode, `load-balancer.hetzner.cloud/hostname: <hostname>` must be set on all `LoadBalancer` services, otherwise healthchecks will fail and the service will not be accessible from outsie the cluster (see [this issue](https://github.com/kubernetes/kubernetes/issues/79783) for more details)
 
 ## Acknowledgements 
 

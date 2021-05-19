@@ -26,7 +26,9 @@ module "master" {
   server_type    = var.master_server_type
   image          = var.image
   location       = var.location
-  node_index     = count.index
+
+  pool_index = 1
+  node_index = count.index
 
   labels       = merge(var.labels, { cluster = var.name, role = "master" })
   firewall_ids = var.firewall_ids
@@ -58,8 +60,8 @@ resource "null_resource" "cluster_bootstrap" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/cluster-init.sh"
-    destination = "/root/cluster-init.sh"
+    source      = "${path.module}/scripts/cluster-join.sh"
+    destination = "/root/cluster-join.sh"
   }
 
   provisioner "file" {
@@ -81,8 +83,8 @@ resource "null_resource" "cluster_bootstrap" {
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /root/cluster-init.sh",
-      "/root/cluster-init.sh",
+      "chmod +x /root/cluster-join.sh",
+      "/root/cluster-join.sh",
     ]
   }
 }
@@ -125,14 +127,14 @@ resource "null_resource" "master_join" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/cluster-init.sh"
-    destination = "/root/cluster-init.sh"
+    source      = "${path.module}/scripts/cluster-join.sh"
+    destination = "/root/cluster-join.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /root/cluster-init.sh",
-      "/root/cluster-init.sh",
+      "chmod +x /root/cluster-join.sh",
+      "/root/cluster-join.sh",
     ]
   }
 }
