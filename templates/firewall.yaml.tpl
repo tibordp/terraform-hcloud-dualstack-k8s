@@ -31,7 +31,7 @@ spec:
         k8s-app: masq-agents
     spec:
       containers:
-%{ if filter_ingress_ipv6 ~}
+%{ if filter_pod_ingress_ipv6 ~}
       - name: anti-masq-agent
         image: tibordp/anti-masq-agent:latest
         imagePullPolicy: IfNotPresent

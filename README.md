@@ -1,6 +1,6 @@
 # Hetzner Dual-Stack Kubernetes Cluster
 
-Unofficial Terraform module to build a basic dual-stack Kubernetes cluster in Hetzner Cloud.
+Unofficial Terraform module to build a viable dual-stack Kubernetes cluster in Hetzner Cloud.
 
 Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs), with the following features:
 
@@ -8,7 +8,7 @@ Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io
 - containerd for CRI
 - IPv6 control plane communication
 - A [custom "network plugin"](./templates/cni.json.tpl), because all major network plugins are broken in various ways for dual-stack.
-  - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic!
+  - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic! 🎉
   - Dual-stack and IPv6-only `Service`s get a private (ULA) IPv6 address
   - A full-mesh static overlay network using Wireguard (pod-to-pod traffic is encrypted)  
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers and deleted nodes are cleaned up.
@@ -105,7 +105,6 @@ terraform taint module.k8s.module.master[0].hcloud_server.instance
 terraform apply
 ```
 
-
 ## Chaining other Terraform modules
 
 TLS certificate credentials form the output can be used to chain other Terraform modules, such as the [Kubernetes provider](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs):
@@ -127,18 +126,23 @@ provider "kubernetes" {
 
 ## Caveats
 
-Exercise caution before using this module in production, as it is not particularly hardened.
+Read these notes carefully before using this module in production.
 
-- As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. Pass `filter_ingress_ipv6 = True` to install iptables rules preventing ingress IPv6 traffic to pods (while still allowing all cluster-internal IPv6 traffic, egress traffic and ingress via exposed `Services` and host ports)
+- As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. Pass `filter_pod_ingress_ipv6 = True` to install iptables rules preventing ingress IPv6 traffic to pods (while still allowing all cluster-internal IPv6 traffic, egress traffic and ingress via exposed `Services` and host ports)
 - In a similar fashion, control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication
 - No `NetworkPolicy` support (if you can make it work, please let me know!)
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs) for some workarounds.
-- Some restrictions on day-2 operations. The following are supported seamlessly, but other changes will likely require the cluster to be recreated (or replaced node-by-node):
-   - Node replacement (see notes below for control plane nodes)
+- Some restrictions on day-2 operations. The following are supported seamlessly, but other changes will likely require the manual steps:
+   - Node replacement (see notes above for control plane nodes)
    - Vertical scaling of node (changing the server type)
-   - Horizontal scaling (changing node count) of both master and worker nodes.
+   - Horizontal scaling (changing node count).
 - No cluster autoscaler support as the networking routing is statically rendered in Terraform.
 - As kube-proxy is configured to use IPVS mode, `load-balancer.hetzner.cloud/hostname: <hostname>` must be set on all `LoadBalancer` services, otherwise healthchecks will fail and the service will not be accessible from outsie the cluster (see [this issue](https://github.com/kubernetes/kubernetes/issues/79783) for more details)
+
+In addition some caveats for dual-stack clusters in general:
+
+- `Services` are single-stack by default. Since IPv6 is the primary IP family of the clusters created with this modules, this means the `ClusterIP` will be IPv6 only, leading to issues for workloads that only bind on IPv4. Pass `ipFamilyPolicy: PreferDualStack` when creating services to assign both IPv4 and IPv6 ClusterIPs.
+
 
 ## Acknowledgements 
 

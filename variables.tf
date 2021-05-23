@@ -103,7 +103,7 @@ variable "apiserver_extra_sans" {
   default     = []
 }
 
-variable "filter_ingress_ipv6" {
+variable "filter_pod_ingress_ipv6" {
   description = "Filter out ingress IPv6 traffic directed to pods (default: false)"
   type        = bool
   default     = false

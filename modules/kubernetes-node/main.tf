@@ -24,7 +24,7 @@ Currently only two pools are used:
 First IP in each node subnet is a private address of the node itself (not really used,
 but useful for pinging nodes wia the Wiregard tunnel)
 
-For IPv6, every node just uses th 2nd /80 of its own public /64.
+For IPv6, every node just uses the 2nd /80 of its own public /64.
 
 */
 
