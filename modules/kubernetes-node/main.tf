@@ -68,14 +68,3 @@ resource "hcloud_server" "instance" {
     ]
   }
 }
-
-module "wireguard_public_key" {
-  source = "matti/resource/shell"
-
-  trigger = hcloud_server.instance.id
-
-  command = <<EOT
-    ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-     root@${hcloud_server.instance.ipv4_address} 'cat /etc/wg_pub.key'
-  EOT
-}

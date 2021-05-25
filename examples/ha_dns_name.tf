@@ -38,7 +38,7 @@ module "k8s" {
   name               = "k8s"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
   hcloud_token       = var.hetzner_token
-  location           = "hel1"
+  location           = "nbg1"
   master_server_type = "cpx31"
   worker_server_type = "cpx31"
 

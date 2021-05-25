@@ -21,7 +21,6 @@ sudo sysctl --system
 
 # Install CRI
 sudo apt-get update
-sudo apt-get upgrade -y
 sudo apt-get install -y \
   apt-transport-https \
   ca-certificates \
@@ -30,9 +29,6 @@ sudo apt-get install -y \
   lsb-release \
   ipvsadm \
   wireguard
-
-wg genkey | sudo tee /etc/wg_priv.key | wg pubkey > /etc/wg_pub.key
-sudo chmod 600 /etc/wg_priv.key
 
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo \

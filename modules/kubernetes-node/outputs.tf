@@ -3,6 +3,11 @@ output "id" {
   value       = hcloud_server.instance.id
 }
 
+output "node_name" {
+  description = "Name of the node"
+  value       = var.name
+}
+
 output "private_ipv4_address" {
   description = "IPv4 address of the server"
   value       = local.private_ipv4_address
@@ -33,7 +38,15 @@ output "pod_subnet_v4" {
   value       = local.pod_subnet_v4
 }
 
-output "wireguard_public_key" {
-  description = "IPv6 network of the server"
-  value       = module.wireguard_public_key.stdout
+output "podcidrs_patch" {
+  description = "Pod cidrs patch"
+  value = {
+    "spec" = {
+      "podCIDR" = local.pod_subnet_v6,
+      "podCIDRs" = [
+        local.pod_subnet_v6,
+        local.pod_subnet_v4
+      ]
+    }
+  }
 }
