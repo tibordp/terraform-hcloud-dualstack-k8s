@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# Install ip-masq-agent (and optionally anti-masq-agent)
-kubectl apply -f firewall.yaml
+# Install network plugin
+kubectl apply -f wigglenet.yaml
 
 # Install cloud provider
 kubectl -n kube-system create secret generic hcloud \

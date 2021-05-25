@@ -24,7 +24,7 @@ Currently only two pools are used:
 First IP in each node subnet is a private address of the node itself (not really used,
 but useful for pinging nodes wia the Wiregard tunnel)
 
-For IPv6, every node just uses th 2nd /80 of its own public /64.
+For IPv6, every node just uses the 2nd /80 of its own public /64.
 
 */
 
@@ -67,15 +67,4 @@ resource "hcloud_server" "instance" {
       "/root/prepare-node.sh",
     ]
   }
-}
-
-module "wireguard_public_key" {
-  source = "matti/resource/shell"
-
-  trigger = hcloud_server.instance.id
-
-  command = <<EOT
-    ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-     root@${hcloud_server.instance.ipv4_address} 'cat /etc/wg_pub.key'
-  EOT
 }

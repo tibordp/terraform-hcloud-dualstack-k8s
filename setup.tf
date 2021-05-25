@@ -4,8 +4,8 @@ resource "null_resource" "setup_cluster" {
   ]
 
   triggers = {
-    filter_ingress_ipv6 = var.filter_ingress_ipv6
-    hcloud_token        = var.hcloud_token
+    filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
+    hcloud_token            = var.hcloud_token
   }
 
   connection {
@@ -17,11 +17,10 @@ resource "null_resource" "setup_cluster" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/firewall.yaml.tpl", {
-      non_masquerade_ranges = ["10.0.0.0/8", var.service_cidr_ipv4]
-      filter_ingress_ipv6   = var.filter_ingress_ipv6
+    content = templatefile("${path.module}/templates/wigglenet.yaml.tpl", {
+      filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
     })
-    destination = "/root/firewall.yaml"
+    destination = "/root/wigglenet.yaml"
   }
 
   provisioner "file" {

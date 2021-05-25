@@ -40,16 +40,6 @@ resource "random_id" "certificate_key" {
   byte_length = 32
 }
 
-
-data "template_file" "master_cni" {
-  count    = var.master_count
-  template = file("${path.module}/templates/cni.json.tpl")
-  vars = {
-    pod_subnet_v6 = module.master[count.index].pod_subnet_v6
-    pod_subnet_v4 = module.master[count.index].pod_subnet_v4
-  }
-}
-
 resource "null_resource" "cluster_bootstrap" {
   connection {
     host        = module.master[0].ipv4_address
@@ -64,10 +54,6 @@ resource "null_resource" "cluster_bootstrap" {
     destination = "/root/cluster-join.sh"
   }
 
-  provisioner "file" {
-    content     = data.template_file.master_cni[0].rendered
-    destination = "/etc/cni/net.d/10-tibornet.conflist"
-  }
 
   provisioner "file" {
     content = templatefile("${path.module}/templates/kubeadm.yaml.tpl", {
@@ -108,11 +94,6 @@ resource "null_resource" "master_join" {
     private_key = file(var.ssh_private_key_path)
   }
 
-  provisioner "file" {
-    content     = data.template_file.master_cni[count.index].rendered
-    destination = "/etc/cni/net.d/10-tibornet.conflist"
-  }
-
   provisioner "local-exec" {
     command = <<EOT
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
@@ -135,6 +116,20 @@ resource "null_resource" "master_join" {
     inline = [
       "chmod +x /root/cluster-join.sh",
       "/root/cluster-join.sh",
+    ]
+  }
+
+  provisioner "remote-exec" {
+    connection {
+      host        = local.kubeadm_host
+      type        = "ssh"
+      timeout     = "5m"
+      user        = "root"
+      private_key = file(var.ssh_private_key_path)
+    }
+
+    inline = [
+      "kubectl patch node '${module.master[count.index].node_name}' -p '${jsonencode(module.master[count.index].podcidrs_patch)}'",
     ]
   }
 }

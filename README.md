@@ -1,16 +1,16 @@
 # Hetzner Dual-Stack Kubernetes Cluster
 
-Unofficial Terraform module to build a basic dual-stack Kubernetes cluster in Hetzner Cloud.
+Unofficial Terraform module to build a viable dual-stack Kubernetes cluster in Hetzner Cloud.
 
-Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs), with the following features:
+Creates a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs), with the following features:
 
 - Single or multiple control plane nodes (in [HA configuration with stacked `etcd`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/))
-- containerd for CRI
-- IPv6 control plane communication
-- A [custom "network plugin"](./templates/cni.json.tpl), because all major network plugins are broken in various ways for dual-stack.
-  - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic!
+- containerd for container runtime
+- [Wigglenet](https://github.com/tibordp/wigglenet) as a network plugin
+  - the primary address family for the cluster is IPv6, which is used for control plane communication
+  - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic! 🎉 (stateful firewall rules are still in place, so direct ingress traffic to pods is blocked by default, prefer to expose workloads through Service)
   - Dual-stack and IPv6-only `Service`s get a private (ULA) IPv6 address
-  - A full-mesh static overlay network using Wireguard (pod-to-pod traffic is encrypted)  
+  - A full-mesh dynamic overlay network using Wireguard, so pod-to-pod traffic is encrypted (Hetzner private networks [are not encrypted](https://docs.hetzner.com/cloud/networks/faq#is-traffic-inside-hetzner-cloud-networks-encrypted), just segregated)
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers and deleted nodes are cleaned up.
 - deploys the [Container Storage Interface](https://github.com/hetznercloud/csi-driver) for dynamic provisioning of volumes
 
@@ -48,7 +48,7 @@ output "kubeconfig" {
 When the cluster is deployed, the `kubeconfig` to reach the cluster is available from the output. There are many ways to continue, but you can store it to file:
 
 ```cmd
-terraform output -raw kubeconfig > demo-cluster.conf
+terraform output -raw kubeconfig > kubeconfig.conf
 ```
 
 and check the access by viewing the created cluster nodes:
@@ -105,7 +105,6 @@ terraform taint module.k8s.module.master[0].hcloud_server.instance
 terraform apply
 ```
 
-
 ## Chaining other Terraform modules
 
 TLS certificate credentials form the output can be used to chain other Terraform modules, such as the [Kubernetes provider](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs):
@@ -127,18 +126,21 @@ provider "kubernetes" {
 
 ## Caveats
 
-Exercise caution before using this module in production, as it is not particularly hardened.
+Read these notes carefully before using this module in production.
 
-- As pods get a public IPv6 address, the ports they bind are directly exposed to the public internet. Pass `filter_ingress_ipv6 = True` to install iptables rules preventing ingress IPv6 traffic to pods (while still allowing all cluster-internal IPv6 traffic, egress traffic and ingress via exposed `Services` and host ports)
-- In a similar fashion, control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication
-- No `NetworkPolicy` support (if you can make it work, please let me know!)
-- kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs) for some workarounds.
-- Some restrictions on day-2 operations. The following are supported seamlessly, but other changes will likely require the cluster to be recreated (or replaced node-by-node):
-   - Node replacement (see notes below for control plane nodes)
+- Control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication, but appropriate Hetzner Firewall rules can be added (make sure to allow UDP port 24601 for Wireguard node-to-node tunnels)
+- Wigglenet is an experimental network plugin that I wrote for my personal use and has definitely not been battle tested. `NetworkPolicy` is not supported.
+- kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here for details and workarounds](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs).
+- Some restrictions on day-2 operations. The following are supported seamlessly, but other changes will likely require the manual steps:
+   - Node replacement (see notes above for control plane nodes)
    - Vertical scaling of node (changing the server type)
-   - Horizontal scaling (changing node count) of both master and worker nodes.
-- No cluster autoscaler support as the networking routing is statically rendered in Terraform.
+   - Horizontal scaling (changing node count).
 - As kube-proxy is configured to use IPVS mode, `load-balancer.hetzner.cloud/hostname: <hostname>` must be set on all `LoadBalancer` services, otherwise healthchecks will fail and the service will not be accessible from outsie the cluster (see [this issue](https://github.com/kubernetes/kubernetes/issues/79783) for more details)
+
+In addition some caveats for dual-stack clusters in general:
+
+- `Services` are single-stack by default. Since IPv6 is the primary IP family of the clusters created with this modules, this means the `ClusterIP` will be IPv6 only, leading to issues for workloads that only bind on IPv4. Pass `ipFamilyPolicy: PreferDualStack` when creating services to assign both IPv4 and IPv6 ClusterIPs.
+
 
 ## Acknowledgements 
 
