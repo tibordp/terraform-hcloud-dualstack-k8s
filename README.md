@@ -2,12 +2,12 @@
 
 Unofficial Terraform module to build a viable dual-stack Kubernetes cluster in Hetzner Cloud.
 
-Create a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs), with the following features:
+Creates a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs), with the following features:
 
 - Single or multiple control plane nodes (in [HA configuration with stacked `etcd`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/))
-- containerd for CRI
-- IPv6 control plane communication
+- containerd for container runtime
 - [Wigglenet](https://github.com/tibordp/wigglenet) as a network plugin
+  - the primary address family for the cluster is IPv6, which is used for control plane communication
   - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic! 🎉 (stateful firewall rules are still in place, so direct ingress traffic to pods is blocked by default, prefer to expose workloads through Service)
   - Dual-stack and IPv6-only `Service`s get a private (ULA) IPv6 address
   - A full-mesh dynamic overlay network using Wireguard, so pod-to-pod traffic is encrypted (Hetzner private networks [are not encrypted](https://docs.hetzner.com/cloud/networks/faq#is-traffic-inside-hetzner-cloud-networks-encrypted), just segregated)
@@ -129,8 +129,8 @@ provider "kubernetes" {
 Read these notes carefully before using this module in production.
 
 - Control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication, but appropriate Hetzner Firewall rules can be added (make sure to allow UDP port 24601 for Wireguard node-to-node tunnels)
-- No `NetworkPolicy` support (if you can make it work, please let me know!)
-- kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs) for some workarounds.
+- Wigglenet is an experimental network plugin that I wrote for my personal use and has definitely not been battle tested. `NetworkPolicy` is not supported.
+- kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here for details and workarounds](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs).
 - Some restrictions on day-2 operations. The following are supported seamlessly, but other changes will likely require the manual steps:
    - Node replacement (see notes above for control plane nodes)
    - Vertical scaling of node (changing the server type)

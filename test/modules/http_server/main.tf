@@ -12,6 +12,7 @@ resource "kubernetes_service" "example" {
     name = "terraform-example"
     annotations = {
       "load-balancer.hetzner.cloud/location" = "hel1"
+      "load-balancer.hetzner.cloud/hostname" = "example.com"
     }
   }
   spec {
