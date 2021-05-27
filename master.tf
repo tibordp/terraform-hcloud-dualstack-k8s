@@ -27,9 +27,6 @@ module "master" {
   image          = var.image
   location       = var.location
 
-  pool_index = 1
-  node_index = count.index
-
   labels       = merge(var.labels, { cluster = var.name, role = "master" })
   firewall_ids = var.firewall_ids
 
@@ -57,10 +54,11 @@ resource "null_resource" "cluster_bootstrap" {
 
   provisioner "file" {
     content = templatefile("${path.module}/templates/kubeadm.yaml.tpl", {
-      apiserverCertSans      = local.apiserver_cert_sans
+      apiserver_cert_sans    = local.apiserver_cert_sans
       certificate_key        = random_id.certificate_key.hex
       control_plane_endpoint = local.control_plane_endpoint
       advertise_address      = module.master[0].ipv6_address
+      pod_cidr_ipv4          = var.pod_cidr_ipv4
       service_cidr_ipv4      = var.service_cidr_ipv4
       service_cidr_ipv6      = var.service_cidr_ipv6
     })
@@ -116,20 +114,6 @@ resource "null_resource" "master_join" {
     inline = [
       "chmod +x /root/cluster-join.sh",
       "/root/cluster-join.sh",
-    ]
-  }
-
-  provisioner "remote-exec" {
-    connection {
-      host        = local.kubeadm_host
-      type        = "ssh"
-      timeout     = "5m"
-      user        = "root"
-      private_key = file(var.ssh_private_key_path)
-    }
-
-    inline = [
-      "kubectl patch node '${module.master[count.index].node_name}' -p '${jsonencode(module.master[count.index].podcidrs_patch)}'",
     ]
   }
 }

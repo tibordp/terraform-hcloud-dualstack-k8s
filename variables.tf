@@ -44,6 +44,12 @@ variable "control_plane_endpoint" {
   default     = ""
 }
 
+variable "pod_cidr_ipv4" {
+  description = "IPv4 CIDR for Pods"
+  type        = string
+  default     = "10.96.0.0/16"
+}
+
 variable "service_cidr_ipv6" {
   description = "IPv6 CIDR for Services"
   type        = string
@@ -59,16 +65,17 @@ variable "service_cidr_ipv4" {
 variable "worker_count" {
   description = "Number of worker nodes"
   type        = number
+  default     = 0
 }
 
 variable "image" {
-  description = "Image for the nodes (default: 'hel1')"
+  description = "Image for the nodes (default: ubuntu-20.04)"
   type        = string
   default     = "ubuntu-20.04"
 }
 
 variable "location" {
-  description = "Server location (default: 'hel1')"
+  description = "Server location (default: hel1)"
   type        = string
   default     = "hel1"
 }
@@ -107,4 +114,10 @@ variable "filter_pod_ingress_ipv6" {
   description = "Filter out ingress IPv6 traffic directed to pods (default: false)"
   type        = bool
   default     = true
+}
+
+variable "generate_join_configuration" {
+  description = "Generate cloud-init user data file for additional workers to join"
+  type        = bool
+  default     = false
 }

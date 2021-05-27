@@ -37,3 +37,8 @@ output "kubeconfig" {
   description = "kubeconfig for the cluster"
   value       = module.kubeconfig.stdout
 }
+
+output "join_user_data" {
+  description = "cloud-init user data for additional worker nodes"
+  value       = data.template_cloudinit_config.join_config.rendered
+}
