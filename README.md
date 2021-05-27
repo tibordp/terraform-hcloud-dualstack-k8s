@@ -13,6 +13,7 @@ Creates a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.i
   - A full-mesh dynamic overlay network using Wireguard, so pod-to-pod traffic is encrypted (Hetzner private networks [are not encrypted](https://docs.hetzner.com/cloud/networks/faq#is-traffic-inside-hetzner-cloud-networks-encrypted), just segregated)
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers and deleted nodes are cleaned up.
 - deploys the [Container Storage Interface](https://github.com/hetznercloud/csi-driver) for dynamic provisioning of volumes
+- supports dynamic worker node provisioning with cloud-init e.g. for use with [cluster autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/hetzner)
 
 ## Getting Started
 
@@ -54,7 +55,7 @@ terraform output -raw kubeconfig > kubeconfig.conf
 and check the access by viewing the created cluster nodes:
 
 ```cmd
-$ kubectl get nodes --kubeconfig=demo-cluster.conf
+$ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME           STATUS   ROLES                  AGE   VERSION
 k8s-master-0   Ready    control-plane,master   31m   v1.21.1
 k8s-worker-0   Ready    <none>                 31m   v1.21.1
@@ -123,6 +124,13 @@ provider "kubernetes" {
   cluster_ca_certificate = module.k8s.certificate_authority_data
 }
 ```
+
+## Cloud-init script for joining additional worker nodes
+
+Once control plane is set up, module has an output called `join_user_data` that contains a cloud-init script that
+can be used to join additional worker nodes outside of Terraform (e.g. for use with [cluster autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/hetzner)).
+
+See [example](./examples/cloud_init.tf) for how it can be used to manage worker separately from this module.
 
 ## Caveats
 

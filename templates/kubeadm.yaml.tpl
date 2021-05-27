@@ -16,14 +16,12 @@ featureGates:
   IPv6DualStack: true
 apiServer:
   certSANs:
-%{ for san in apiserverCertSans ~}
+%{ for san in apiserver_cert_sans ~}
   - "${san}"
 %{ endfor ~}
-controllerManager:
-  extraArgs:
-    allocate-node-cidrs: "false"
 networking:
-  serviceSubnet: ${service_cidr_ipv6},${service_cidr_ipv4}
+  podSubnet: "${pod_cidr_ipv4}"
+  serviceSubnet: "${service_cidr_ipv6},${service_cidr_ipv4}"
 controlPlaneEndpoint: "${control_plane_endpoint}:6443"
 ---
 kind: KubeProxyConfiguration

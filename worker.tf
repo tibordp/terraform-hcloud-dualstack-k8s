@@ -8,9 +8,6 @@ module "worker" {
   image          = var.image
   location       = var.location
 
-  pool_index = 2
-  node_index = count.index
-
   labels       = merge(var.labels, { cluster = var.name, role = "worker" })
   firewall_ids = var.firewall_ids
 
@@ -43,19 +40,5 @@ resource "null_resource" "worker_join" {
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         root@${module.worker[count.index].ipv4_address}
     EOT
-  }
-
-  provisioner "remote-exec" {
-    connection {
-      host        = local.kubeadm_host
-      type        = "ssh"
-      timeout     = "5m"
-      user        = "root"
-      private_key = file(var.ssh_private_key_path)
-    }
-
-    inline = [
-      "kubectl patch node '${module.worker[count.index].node_name}' -p '${jsonencode(module.worker[count.index].podcidrs_patch)}'",
-    ]
   }
 }
