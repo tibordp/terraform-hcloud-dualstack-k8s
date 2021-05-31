@@ -21,7 +21,7 @@ apiServer:
 %{ endfor ~}
 networking:
   podSubnet: "${pod_cidr_ipv4}"
-%{ if primary_service_ip_family == "ipv4" ~}  
+%{ if primary_ip_family  == "ipv4" ~}  
   serviceSubnet: "${service_cidr_ipv4},${service_cidr_ipv6}"
 %{ else ~}
   serviceSubnet: "${service_cidr_ipv6},${service_cidr_ipv4}"

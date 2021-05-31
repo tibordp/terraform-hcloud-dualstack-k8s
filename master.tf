@@ -55,14 +55,14 @@ resource "null_resource" "cluster_bootstrap" {
 
   provisioner "file" {
     content = templatefile("${path.module}/templates/kubeadm.yaml.tpl", {
-      apiserver_cert_sans       = local.apiserver_cert_sans
-      certificate_key           = random_id.certificate_key.hex
-      control_plane_endpoint    = local.control_plane_endpoint
-      advertise_address         = local.adverise_addresses[0]
-      pod_cidr_ipv4             = var.pod_cidr_ipv4
-      service_cidr_ipv4         = var.service_cidr_ipv4
-      service_cidr_ipv6         = var.service_cidr_ipv6
-      primary_service_ip_family = var.primary_ip_family
+      apiserver_cert_sans    = local.apiserver_cert_sans
+      certificate_key        = random_id.certificate_key.hex
+      control_plane_endpoint = local.control_plane_endpoint
+      advertise_address      = local.adverise_addresses[0]
+      pod_cidr_ipv4          = var.pod_cidr_ipv4
+      service_cidr_ipv4      = var.service_cidr_ipv4
+      service_cidr_ipv6      = var.service_cidr_ipv6
+      primary_ip_family      = var.primary_ip_family
     })
     destination = "/root/cluster.yaml"
   }
