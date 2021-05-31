@@ -21,7 +21,11 @@ apiServer:
 %{ endfor ~}
 networking:
   podSubnet: "${pod_cidr_ipv4}"
+%{ if primary_ip_family  == "ipv4" ~}  
+  serviceSubnet: "${service_cidr_ipv4},${service_cidr_ipv6}"
+%{ else ~}
   serviceSubnet: "${service_cidr_ipv6},${service_cidr_ipv4}"
+%{ endif ~}
 controlPlaneEndpoint: "${control_plane_endpoint}:6443"
 ---
 kind: KubeProxyConfiguration

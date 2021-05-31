@@ -29,8 +29,6 @@ module "k8s" {
   location           = "hel1"
   master_server_type = "cx31"
   worker_server_type = "cx31"
-
-  generate_join_configuration = true
 }
 
 // After control plane is set up, additional workers can be joined

@@ -6,8 +6,8 @@ Creates a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.i
 
 - Single or multiple control plane nodes (in [HA configuration with stacked `etcd`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/))
 - containerd for container runtime
-- [Wigglenet](https://github.com/tibordp/wigglenet) as a network plugin
-  - the primary address family for the cluster is IPv6, which is used for control plane communication
+- [Wigglenet](https://github.com/tibordp/wigglenet) for the network plugin
+  - the primary address family for the cluster is configurable, but defaults to IPv6, which is used for control plane communication
   - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic! 🎉 (stateful firewall rules are still in place, so direct ingress traffic to pods is blocked by default, prefer to expose workloads through Service)
   - Dual-stack and IPv6-only `Service`s get a private (ULA) IPv6 address
   - A full-mesh dynamic overlay network using Wireguard, so pod-to-pod traffic is encrypted (Hetzner private networks [are not encrypted](https://docs.hetzner.com/cloud/networks/faq#is-traffic-inside-hetzner-cloud-networks-encrypted), just segregated)
@@ -31,6 +31,7 @@ Create a simple Kubernetes cluster:
 ```hcl
 module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
+  version = "0.6.0"
 
   name               = "k8s"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
@@ -92,7 +93,8 @@ First master node is special in that it is used by the provisioning process (e.g
 ```hcl
 module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
- 
+  version = "0.6.0"
+
   ...
  
   kubeadm_host = "<ip address of another master node>"
@@ -143,11 +145,13 @@ Read these notes carefully before using this module in production.
    - Node replacement (see notes above for control plane nodes)
    - Vertical scaling of node (changing the server type)
    - Horizontal scaling (changing node count).
+   - Changing cluster addons settings (Wigglenet firewall settings, Hetzner API token for the Hetzner CCM and CSI).
 - As kube-proxy is configured to use IPVS mode, `load-balancer.hetzner.cloud/hostname: <hostname>` must be set on all `LoadBalancer` services, otherwise healthchecks will fail and the service will not be accessible from outsie the cluster (see [this issue](https://github.com/kubernetes/kubernetes/issues/79783) for more details)
 
 In addition some caveats for dual-stack clusters in general:
 
-- `Services` are single-stack by default. Since IPv6 is the primary IP family of the clusters created with this modules, this means the `ClusterIP` will be IPv6 only, leading to issues for workloads that only bind on IPv4. Pass `ipFamilyPolicy: PreferDualStack` when creating services to assign both IPv4 and IPv6 ClusterIPs.
+- `Services` are single-stack by default. Since IPv6 is the primary IP family of the clusters created with this modules, this means the `ClusterIP` will be IPv6 only, leading to issues for workloads that only bind on IPv4. Pass `ipFamilyPolicy: PreferDualStack` when creating services to assign both IPv4 and IPv6 ClusterIPs. You can use the [prefer-dual-stack-webhook](https://github.com/tibordp/prefer-dual-stack-webhook) admission controller to change the default to `PreferDualStack` for all newly creted services that don't specify IP family policy.
+- the apiserver Service (`kubernetes.default.svc.cluster.local`) has to be single-stack, as `--apiserver-advertise-address` does not support dual-stack yet. The default address family for the cluster can be selected with `primary_ip_family` variable (defaults to `ipv6`).
 
 
 ## Acknowledgements 
