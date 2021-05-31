@@ -111,13 +111,18 @@ variable "apiserver_extra_sans" {
 }
 
 variable "filter_pod_ingress_ipv6" {
-  description = "Filter out ingress IPv6 traffic directed to pods (default: false)"
+  description = "Filter out ingress IPv6 traffic directed to pods (default: true)"
   type        = bool
   default     = true
 }
 
-variable "generate_join_configuration" {
-  description = "Generate cloud-init user data file for additional workers to join"
-  type        = bool
-  default     = false
+variable "primary_ip_family" {
+  description = "(Optional) Primary IP family for Service resources in cluster (default: ipv6)"
+  type        = string
+  default     = "ipv6"
+
+  validation {
+    condition     = can(regex("^(ipv4|ipv6)$", var.primary_ip_family))
+    error_message = "The primary_ip_family value must be a \"ipv6\" or \"ipv4\"."
+  }
 }

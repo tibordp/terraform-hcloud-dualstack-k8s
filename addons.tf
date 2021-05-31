@@ -1,4 +1,4 @@
-resource "null_resource" "setup_cluster" {
+resource "null_resource" "install_addons" {
   depends_on = [
     null_resource.cluster_bootstrap
   ]
@@ -24,14 +24,14 @@ resource "null_resource" "setup_cluster" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/cluster-setup.sh"
-    destination = "/root/cluster-setup.sh"
+    source      = "${path.module}/scripts/install-addons.sh"
+    destination = "/root/install-addons.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /root/cluster-setup.sh",
-      "HCLOUD_TOKEN='${var.hcloud_token}' /root/cluster-setup.sh",
+      "chmod +x /root/install-addons.sh",
+      "HCLOUD_TOKEN='${var.hcloud_token}' /root/install-addons.sh",
     ]
   }
 }
