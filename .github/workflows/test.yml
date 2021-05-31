@@ -36,7 +36,9 @@ jobs:
       run: terraform apply -auto-approve
       working-directory: test
 
+      # Disable locking of statefile in case previous step was canceled, we
+      # still want to clean up any resources created.
     - name: Terraform Destroy
-      if: ${{ always() }}
-      run: terraform destroy -auto-approve
+      if: ${{ always() }}      
+      run: terraform destroy -auto-approve -lock=false
       working-directory: test
