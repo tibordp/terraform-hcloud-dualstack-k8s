@@ -132,6 +132,8 @@ provider "kubernetes" {
 Once control plane is set up, module has an output called `join_user_data` that contains a cloud-init script that
 can be used to join additional worker nodes outside of Terraform (e.g. for use with [cluster autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/hetzner)).
 
+The generated join configuration will be valid for 10 years, after which the bootstrap token will need to be regenerated (but you should probably rebuild the cluster with something better by then).
+
 See [example](./examples/cloud_init.tf) for how it can be used to manage worker separately from this module.
 
 ## Caveats
