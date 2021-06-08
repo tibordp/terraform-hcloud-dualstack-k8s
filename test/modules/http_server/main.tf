@@ -7,6 +7,21 @@ terraform {
   }
 }
 
+variable "client_certificate" {}
+
+variable "client_key" {}
+
+variable "cluster_ca_certificate" {}
+
+variable "host" {}
+
+provider "kubernetes-alpha" {
+  host = var.host
+  client_certificate     = var.client_certificate
+  client_key             = var.client_key
+  cluster_ca_certificate = var.cluster_ca_certificate
+}
+
 resource "kubernetes_manifest" "nginx-service" {
   provider = kubernetes-alpha
 
@@ -44,7 +59,7 @@ resource "kubernetes_manifest" "nginx-service" {
 
 resource "kubernetes_manifest" "nginx-deployment" {
   provider = kubernetes-alpha
-  
+
   manifest = {
     "apiVersion" = "apps/v1"
     "kind"       = "Deployment"
