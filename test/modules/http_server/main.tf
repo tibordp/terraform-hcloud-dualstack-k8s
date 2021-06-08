@@ -7,7 +7,9 @@ terraform {
   }
 }
 
-resource "kubernetes-alpha_manifest" "nginx-service" {
+resource "kubernetes_manifest" "nginx-service" {
+  provider = kubernetes-alpha
+
   manifest = {
     "apiVersion" = "v1"
     "kind"       = "Service"
@@ -40,7 +42,9 @@ resource "kubernetes-alpha_manifest" "nginx-service" {
   }
 }
 
-resource "kubernetes-alpha_manifest" "nginx-deployment" {
+resource "kubernetes_manifest" "nginx-deployment" {
+  provider = kubernetes-alpha
+  
   manifest = {
     "apiVersion" = "apps/v1"
     "kind"       = "Deployment"
