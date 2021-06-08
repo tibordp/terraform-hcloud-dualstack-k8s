@@ -22,8 +22,8 @@ kubectl)
     ;;
 setup)
     terraform apply -auto-approve
-    terraform output -raw simple_cluster > simple_cluster.conf
-    terraform output -raw ha_cluster > ha_cluster.conf
+    terraform output -no-color -raw simple_cluster > simple_cluster.conf
+    terraform output -no-color -raw ha_cluster > ha_cluster.conf
 
     setup_cluster "$(pwd)/simple_cluster.conf"
     setup_cluster "$(pwd)/ha_cluster.conf"
