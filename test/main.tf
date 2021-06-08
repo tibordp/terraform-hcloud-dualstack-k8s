@@ -4,10 +4,6 @@ terraform {
       source  = "hetznercloud/hcloud"
       version = "1.26.0"
     }
-    kubernetes-alpha = {
-      source  = "hashicorp/kubernetes-alpha"
-      version = "0.4.1"
-    }
   }
 }
 
@@ -52,19 +48,7 @@ module "ha_cluster" {
   master_count = 2
 }
 
-provider "kubernetes-alpha" {
-  alias = "simple_cluster"
-  # GitHub Actions does not have IPv6 connectivity, so we need to use IPv4 :/
-
-}
-
-
-
 module "app_simple_cluster" {
-  depends_on = [
-    module.simple_cluster
-  ]
-
   source = "./modules/http_server"
 
   host = "https://${module.simple_cluster.masters[0].ipv4_address}:6443"
@@ -75,10 +59,6 @@ module "app_simple_cluster" {
 }
 
 module "app_ha_cluster" {
-  depends_on = [
-    module.ha_cluster
-  ]
-
   source = "./modules/http_server"
 
   host = "https://${module.ha_cluster.load_balancer.ipv4}:6443"
