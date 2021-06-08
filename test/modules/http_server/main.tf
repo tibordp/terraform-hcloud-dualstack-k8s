@@ -1,52 +1,102 @@
 terraform {
   required_providers {
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "2.2.0"
+    kubernetes-alpha = {
+      source  = "hashicorp/kubernetes-alpha"
+      version = "0.4.1"
     }
   }
 }
 
-resource "kubernetes_service" "example" {
-  metadata {
-    name = "terraform-example"
-    annotations = {
-      "load-balancer.hetzner.cloud/location" = "hel1"
-      "load-balancer.hetzner.cloud/hostname" = "example.com"
+resource "kubernetes_manifest" "nginx-service" {
+  manifest = {
+    "apiVersion" = "v1"
+    "kind"       = "Service"
+    "metadata" = {
+      "name" = "nginx-service"
+      "annotations" = {
+        "load-balancer.hetzner.cloud/location" = "hel1"
+        "load-balancer.hetzner.cloud/hostname" = "example.com"
+      }
     }
-  }
-  spec {
-    selector = {
-      app = kubernetes_pod.example.metadata.0.labels.app
-    }
-    session_affinity = "ClientIP"
-    port {
-      port        = 80
-      target_port = 80
-    }
-
-    type = "LoadBalancer"
-  }
-
-  wait_for_load_balancer = true
-}
-
-resource "kubernetes_pod" "example" {
-  metadata {
-    name = "terraform-example"
-    labels = {
-      app = "test"
+    "spec" = {
+      "ipFamilyPolicy" = "PreferDualStack"
+      "ports" = [
+        {
+          "port"       = 80
+          "targetPort" = 80
+        },
+      ]
+      "selector" = {
+        "app" = "nginx"
+      }
+      "type" = "LoadBalancer"
     }
   }
 
-  spec {
-    container {
-      image = "nginx:latest"
-      name  = "example"
+  wait_for = {
+    fields = {
+      "status.readyReplicas" = "1"
     }
   }
 }
 
-output "load_balancer_address" {
-  value = kubernetes_service.example.status[0].load_balancer[0].ingress
+resource "kubernetes_manifest" "nginx-deployment" {
+  manifest = {
+    "apiVersion" = "apps/v1"
+    "kind"       = "Deployment"
+    "metadata" = {
+      "labels" = {
+        "app" = "nginx"
+      }
+      "name" = "nginx"
+    }
+    "spec" = {
+      "replicas" = 1
+      "selector" = {
+        "matchLabels" = {
+          "app" = "nginx"
+        }
+      }
+      "template" = {
+        "metadata" = {
+          "labels" = {
+            "app" = "nginx"
+          }
+        }
+        "spec" = {
+          "containers" = [
+            {
+              "image" = "nginx:latest"
+              "name"  = "nginx"
+              "ports" = [
+                {
+                  "containerPort" = 80
+                  "name"          = "http"
+                },
+              ]
+              "readinessProbe" = {
+                "httpGet" = {
+                  "path" = "/"
+                  "port" = 80
+                }
+              }
+              "livenessProbe" = {
+                "httpGet" = {
+                  "path" = "/"
+                  "port" = 80
+                }
+              }
+            },
+          ]
+        }
+      }
+    }
+  }
+
+  wait_for = {
+    fields = {
+      # Check an ingress has an IP
+      "status.loadBalancer.hostname" = "^example\\.com$"
+    }
+  }
 }

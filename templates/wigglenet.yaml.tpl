@@ -54,7 +54,7 @@ spec:
       serviceAccountName: wigglenet
       containers:
       - name: wigglenet
-        image: tibordp/wigglenet:0.2.0
+        image: tibordp/wigglenet:0.2.1
         imagePullPolicy: Always
         env:
         - name: NODE_NAME
