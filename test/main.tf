@@ -48,10 +48,20 @@ module "ha_cluster" {
   master_count = 2
 }
 
+
+# GitHub Actions does not support IPv6 connectivity, so we need to hack the server endpoints
 output "simple_cluster" {
-  value = module.simple_cluster.kubeconfig
+  value = replace(
+    module.simple_cluster.kubeconfig,
+    "/server: .*/",
+    "server: https://${module.simple_cluster.masters[0].ipv4_address}:6443"
+  )
 }
 
 output "ha_cluster" {
-  value = module.ha_cluster.kubeconfig
+  value = replace(
+    module.ha_cluster.kubeconfig,
+    "/server: .*/",
+    "server: https://${module.ha_cluster.load_balancer.ipv4}:6443"
+  )
 }
