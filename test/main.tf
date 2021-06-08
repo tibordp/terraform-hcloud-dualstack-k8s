@@ -79,7 +79,7 @@ module "app_simple_cluster" {
 
   source = "./modules/http_server"
   providers = {
-    kubernetes = kubernetes.simple_cluster
+    kubernetes-alpha = kubernetes.simple_cluster
   }
 }
 
@@ -90,6 +90,6 @@ module "app_ha_cluster" {
 
   source = "./modules/http_server"
   providers = {
-    kubernetes = kubernetes.ha_cluster
+    kubernetes-alpha = kubernetes.ha_cluster
   }
 }
