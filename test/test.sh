@@ -3,7 +3,7 @@ set -euo pipefail
 
 setup_cluster() {
     # Wait for cluster addons to become available
-    ./kubectl --kubeconfig "$1" wait --timeout=240s --for condition=ready $(kubectl --kubeconfig "$1" get nodes -o name)
+    ./kubectl --kubeconfig "$1" wait --timeout=240s --for condition=ready $(./kubectl --kubeconfig "$1" get nodes -o name)
     ./kubectl --kubeconfig "$1" wait --timeout=240s --for condition=available -n kube-system deployment/coredns 
 
     # Install our workload
