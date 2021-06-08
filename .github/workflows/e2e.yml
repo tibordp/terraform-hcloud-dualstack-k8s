@@ -28,17 +28,21 @@ jobs:
     - name: Generate SSH keypair
       run: ssh-keygen -b 2048 -t rsa -f  ~/.ssh/id_rsa -q -N ""
 
+    - name: Install kubectl
+      run: ./test.sh kubectl
+      working-directory: test      
+
     - name: Terraform Init
       run: terraform init
       working-directory: test
 
-    - name: Setup test
+    - name: Provision clusters
       run: ./test.sh setup
       working-directory: test
 
       # Disable locking of statefile in case previous step was canceled, we
       # still want to clean up any resources created.
-    - name: Teardown
+    - name: Teardown clusters
       if: ${{ always() }}      
       run: ./test.sh teardown
       working-directory: test
