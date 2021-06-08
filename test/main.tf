@@ -48,22 +48,10 @@ module "ha_cluster" {
   master_count = 2
 }
 
-module "app_simple_cluster" {
-  source = "./modules/http_server"
-
-  host = "https://${module.simple_cluster.masters[0].ipv4_address}:6443"
-
-  client_certificate     = module.simple_cluster.client_certificate_data
-  client_key             = module.simple_cluster.client_key_data
-  cluster_ca_certificate = module.simple_cluster.certificate_authority_data
+output "simple_cluster" {
+  value = module.simple_cluster.kubeconfig
 }
 
-module "app_ha_cluster" {
-  source = "./modules/http_server"
-
-  host = "https://${module.ha_cluster.load_balancer.ipv4}:6443"
-
-  client_certificate     = module.ha_cluster.client_certificate_data
-  client_key             = module.ha_cluster.client_key_data
-  cluster_ca_certificate = module.ha_cluster.certificate_authority_data
+output "ha_cluster" {
+  value = module.ha_cluster.kubeconfig
 }

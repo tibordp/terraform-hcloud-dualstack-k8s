@@ -1,4 +1,4 @@
-name: 'Test Terraform on Hetzner'
+name: 'E2E test Terraform on Hetzner'
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ master ]    
 
 jobs:
-  deploy-terraform:
+  e2e-test:
     name: 'Terraform'
     runs-on: ubuntu-latest
 
@@ -32,13 +32,13 @@ jobs:
       run: terraform init
       working-directory: test
 
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
+    - name: Setup test
+      run: ./test.sh setup
       working-directory: test
 
       # Disable locking of statefile in case previous step was canceled, we
       # still want to clean up any resources created.
-    - name: Terraform Destroy
+    - name: Teardown
       if: ${{ always() }}      
-      run: terraform destroy -auto-approve -lock=false
+      run: ./test.sh teardown
       working-directory: test
