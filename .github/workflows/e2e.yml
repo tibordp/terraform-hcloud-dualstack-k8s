@@ -1,4 +1,4 @@
-name: 'Test Terraform on Hetzner'
+name: 'E2E test Terraform on Hetzner'
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ master ]    
 
 jobs:
-  deploy-terraform:
+  e2e-test:
     name: 'Terraform'
     runs-on: ubuntu-latest
 
@@ -24,21 +24,25 @@ jobs:
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1    
+      with:
+        terraform_wrapper: false      
 
     - name: Generate SSH keypair
       run: ssh-keygen -b 2048 -t rsa -f  ~/.ssh/id_rsa -q -N ""
+
+    - name: Install kubectl
+      run: ./test.sh kubectl
+      working-directory: test      
 
     - name: Terraform Init
       run: terraform init
       working-directory: test
 
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
+    - name: Provision clusters
+      run: ./test.sh setup
       working-directory: test
 
-      # Disable locking of statefile in case previous step was canceled, we
-      # still want to clean up any resources created.
-    - name: Terraform Destroy
+    - name: Teardown clusters
       if: ${{ always() }}      
-      run: terraform destroy -auto-approve -lock=false
+      run: ./test.sh teardown
       working-directory: test

@@ -8,7 +8,7 @@ kubectl apply -f wigglenet.yaml
 kubectl -n kube-system create secret generic hcloud \
     --from-literal=token="$HCLOUD_TOKEN" \
     -o yaml --dry-run=client | kubectl apply -f-
-kubectl apply -f https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/latest/download/ccm.yaml
+kubectl apply -f hetzner_ccm.yaml
 
 # Install storage provider
 kubectl -n kube-system create secret generic hcloud-csi \

@@ -4,10 +4,6 @@ terraform {
       source  = "hetznercloud/hcloud"
       version = "1.26.0"
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "2.2.0"
-    }
   }
 }
 
@@ -52,52 +48,20 @@ module "ha_cluster" {
   master_count = 2
 }
 
-provider "kubernetes" {
-  alias = "simple_cluster"
-  # GitHub Actions does not have IPv6 connectivity, so we need to use IPv4 :/
-  host = "https://${module.simple_cluster.masters[0].ipv4_address}:6443"
 
-  client_certificate     = module.simple_cluster.client_certificate_data
-  client_key             = module.simple_cluster.client_key_data
-  cluster_ca_certificate = module.simple_cluster.certificate_authority_data
+# GitHub Actions does not support IPv6 connectivity, so we need to hack the server endpoints
+output "simple_cluster" {
+  value = replace(
+    module.simple_cluster.kubeconfig,
+    "/server: .*/",
+    "server: https://${module.simple_cluster.masters[0].ipv4_address}:6443"
+  )
 }
 
-provider "kubernetes" {
-  alias = "ha_cluster"
-  # GitHub Actions does not have IPv6 connectivity, so we need to use IPv4 :/
-  host = "https://${module.ha_cluster.load_balancer.ipv4}:6443"
-
-  client_certificate     = module.ha_cluster.client_certificate_data
-  client_key             = module.ha_cluster.client_key_data
-  cluster_ca_certificate = module.ha_cluster.certificate_authority_data
-}
-
-module "app_simple_cluster" {
-  depends_on = [
-    module.simple_cluster
-  ]
-
-  source = "./modules/http_server"
-  providers = {
-    kubernetes = kubernetes.simple_cluster
-  }
-}
-
-module "app_ha_cluster" {
-  depends_on = [
-    module.ha_cluster
-  ]
-
-  source = "./modules/http_server"
-  providers = {
-    kubernetes = kubernetes.ha_cluster
-  }
-}
-
-output "ip_address_simple_cluster" {
-  value = module.app_simple_cluster.load_balancer_address
-}
-
-output "ip_address_ha_cluster" {
-  value = module.app_ha_cluster.load_balancer_address
+output "ha_cluster" {
+  value = replace(
+    module.ha_cluster.kubeconfig,
+    "/server: .*/",
+    "server: https://${module.ha_cluster.load_balancer.ipv4}:6443"
+  )
 }

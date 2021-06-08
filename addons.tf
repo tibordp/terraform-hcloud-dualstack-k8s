@@ -4,8 +4,11 @@ resource "null_resource" "install_addons" {
   ]
 
   triggers = {
-    filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
-    hcloud_token            = var.hcloud_token
+    wigglenet_manifest = templatefile("${path.module}/templates/wigglenet.yaml.tpl", {
+      filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
+    })
+    ccm_manifest = templatefile("${path.module}/templates/hetzner_ccm.yaml.tpl", {})
+    hcloud_token = var.hcloud_token
   }
 
   connection {
@@ -17,10 +20,13 @@ resource "null_resource" "install_addons" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/wigglenet.yaml.tpl", {
-      filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
-    })
+    content     = self.triggers.wigglenet_manifest
     destination = "/root/wigglenet.yaml"
+  }
+
+  provisioner "file" {
+    content     = self.triggers.ccm_manifest
+    destination = "/root/hetzner_ccm.yaml"
   }
 
   provisioner "file" {
