@@ -40,8 +40,6 @@ jobs:
       run: ./test.sh setup
       working-directory: test
 
-      # Disable locking of statefile in case previous step was canceled, we
-      # still want to clean up any resources created.
     - name: Teardown clusters
       if: ${{ always() }}      
       run: ./test.sh teardown
