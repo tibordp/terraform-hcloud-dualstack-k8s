@@ -24,6 +24,8 @@ jobs:
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1    
+      with:
+        terraform_wrapper: false      
 
     - name: Generate SSH keypair
       run: ssh-keygen -b 2048 -t rsa -f  ~/.ssh/id_rsa -q -N ""
