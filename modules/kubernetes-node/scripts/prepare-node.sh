@@ -41,7 +41,7 @@ containerd config default | \
 # Necessary for out-of-tree cloud providers as of 1.21.1 (soon to be deprecated)
 cat <<EOF | sudo tee /etc/systemd/system/kubelet.service.d/20-hcloud.conf > /dev/null
 [Service]
-Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external"
+Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external --node-ip=::"
 EOF
 
 sudo systemctl daemon-reload
