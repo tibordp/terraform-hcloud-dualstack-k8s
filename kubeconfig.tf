@@ -1,6 +1,8 @@
 module "kubeconfig" {
-  source     = "matti/resource/shell"
-  depends_on = [null_resource.cluster_bootstrap]
+  source        = "matti/resource/shell"
+  version       = "1.3.0"
+  depends_on    = [null_resource.cluster_bootstrap]
+  fail_on_error = true
 
   trigger = null_resource.cluster_bootstrap.id
 
@@ -10,38 +12,9 @@ module "kubeconfig" {
   EOT
 }
 
-module "certificate_authority_data" {
-  source     = "matti/resource/shell"
-  depends_on = [null_resource.cluster_bootstrap]
-
-  trigger = null_resource.cluster_bootstrap.id
-
-  command = <<EOT
-    ssh -i ${var.ssh_private_key_path}  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-      root@${local.kubeadm_host} 'kubectl config --kubeconfig /root/.kube/config view --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}''
-  EOT
-}
-
-module "client_certificate_data" {
-  source     = "matti/resource/shell"
-  depends_on = [null_resource.cluster_bootstrap]
-
-  trigger = null_resource.cluster_bootstrap.id
-
-  command = <<EOT
-    ssh -i ${var.ssh_private_key_path}  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-      root@${local.kubeadm_host} 'kubectl config --kubeconfig /root/.kube/config view --flatten -o jsonpath='{.users[0].user.client-certificate-data}''
-  EOT
-}
-
-module "client_key_data" {
-  source     = "matti/resource/shell"
-  depends_on = [null_resource.cluster_bootstrap]
-
-  trigger = null_resource.cluster_bootstrap.id
-
-  command = <<EOT
-    ssh -i ${var.ssh_private_key_path}  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-      root@${local.kubeadm_host} 'kubectl config --kubeconfig /root/.kube/config view --flatten -o jsonpath='{.users[0].user.client-key-data}''
-  EOT
+locals {
+  kubeconfig                 = yamldecode(module.kubeconfig.stdout)
+  certificate_authority_data = base64decode(local.kubeconfig.clusters[0].cluster.certificate-authority-data)
+  client_certificate_data    = base64decode(local.kubeconfig.users[0].user.client-certificate-data)
+  client_key_data            = base64decode(local.kubeconfig.users[0].user.client-key-data)
 }

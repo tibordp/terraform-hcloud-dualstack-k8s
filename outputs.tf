@@ -20,17 +20,17 @@ output "apiserver_url" {
 
 output "client_certificate_data" {
   description = "kubeconfig for the cluster"
-  value       = base64decode(module.client_certificate_data.stdout)
+  value       = local.client_certificate_data
 }
 
 output "certificate_authority_data" {
   description = "kubeconfig for the cluster"
-  value       = base64decode(module.certificate_authority_data.stdout)
+  value       = local.certificate_authority_data
 }
 
 output "client_key_data" {
   description = "kubeconfig for the cluster"
-  value       = base64decode(module.client_key_data.stdout)
+  value       = local.client_key_data
 }
 
 output "kubeconfig" {
