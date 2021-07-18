@@ -4,8 +4,10 @@ locals {
 }
 
 module "join_config" {
-  source     = "matti/resource/shell"
-  depends_on = [null_resource.cluster_bootstrap]
+  source        = "matti/resource/shell"
+  version       = "1.3.0"
+  depends_on    = [null_resource.cluster_bootstrap]
+  fail_on_error = true
 
   trigger = null_resource.cluster_bootstrap.id
 
