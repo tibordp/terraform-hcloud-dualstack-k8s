@@ -22,11 +22,12 @@ module "master" {
   count  = var.master_count
   source = "./modules/kubernetes-node"
 
-  name           = "${var.name}-master-${count.index}"
-  hcloud_ssh_key = var.hcloud_ssh_key
-  server_type    = var.master_server_type
-  image          = var.image
-  location       = var.location
+  name               = "${var.name}-master-${count.index}"
+  hcloud_ssh_key     = var.hcloud_ssh_key
+  server_type        = var.master_server_type
+  image              = var.image
+  location           = var.location
+  kubernetes_version = var.kubernetes_version
 
   labels       = merge(var.labels, { cluster = var.name, role = "master" })
   firewall_ids = var.firewall_ids
@@ -63,6 +64,7 @@ resource "null_resource" "cluster_bootstrap" {
       service_cidr_ipv4      = var.service_cidr_ipv4
       service_cidr_ipv6      = var.service_cidr_ipv6
       primary_ip_family      = var.primary_ip_family
+      kubernetes_version     = var.kubernetes_version
     })
     destination = "/root/cluster.yaml"
   }

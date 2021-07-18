@@ -18,6 +18,11 @@ variable "image" {
   type        = string
 }
 
+variable "kubernetes_version" {
+  description = "Kubernetes version"
+  type        = string
+}
+
 variable "location" {
   description = "Server location"
   type        = string

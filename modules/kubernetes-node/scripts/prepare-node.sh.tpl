@@ -29,7 +29,7 @@ echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https:/
 
 # Install container runtime and Kubernetes
 sudo apt-get update -qq
-sudo apt-get install -qq containerd.io kubelet=1.21.1-00 kubeadm=1.21.1-00 kubectl=1.21.1-00
+sudo apt-get install -qq containerd.io kubelet=${kubernetes_version}-00 kubeadm=${kubernetes_version}-00 kubectl=${kubernetes_version}-00
 apt-mark hold kubelet kubeadm kubectl
 
 # Enable systemd cgroups driver

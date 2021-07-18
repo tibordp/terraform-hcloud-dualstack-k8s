@@ -11,7 +11,7 @@ localAPIEndpoint:
 ---
 kind: ClusterConfiguration
 apiVersion: kubeadm.k8s.io/v1beta2
-kubernetesVersion: v1.21.0
+kubernetesVersion: "v${kubernetes_version}"
 featureGates:
   IPv6DualStack: true
 apiServer:
@@ -31,3 +31,4 @@ controlPlaneEndpoint: "${control_plane_endpoint}:6443"
 kind: KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 mode: ipvs
+bindAddress: "::"
