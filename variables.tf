@@ -126,3 +126,9 @@ variable "primary_ip_family" {
     error_message = "The primary_ip_family value must be a \"ipv6\" or \"ipv4\"."
   }
 }
+
+variable "kubernetes_version" {
+  description = "Version of Kubernetes to install (default: true)"
+  type        = string
+  default     = "1.21.2"
+}

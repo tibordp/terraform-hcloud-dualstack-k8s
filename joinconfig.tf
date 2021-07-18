@@ -24,7 +24,9 @@ data "template_cloudinit_config" "join_config" {
   part {
     content_type = "text/x-shellscript"
     content = join("\n", [
-      file("${path.module}/modules/kubernetes-node/scripts/prepare-node.sh"),
+      templatefile("${path.module}/modules/kubernetes-node/scripts/prepare-node.sh.tpl", {
+        kubernetes_version = var.kubernetes_version
+      }),
       module.join_config.stdout
     ])
   }

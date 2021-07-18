@@ -30,7 +30,9 @@ resource "hcloud_server" "instance" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/prepare-node.sh"
+    content = templatefile("${path.module}/scripts/prepare-node.sh.tpl", {
+      kubernetes_version = var.kubernetes_version
+    })
     destination = "/root/prepare-node.sh"
   }
 

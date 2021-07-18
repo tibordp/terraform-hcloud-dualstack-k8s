@@ -2,11 +2,12 @@ module "worker" {
   count  = var.worker_count
   source = "./modules/kubernetes-node"
 
-  name           = "${var.name}-worker-${count.index}"
-  hcloud_ssh_key = var.hcloud_ssh_key
-  server_type    = var.worker_server_type
-  image          = var.image
-  location       = var.location
+  name               = "${var.name}-worker-${count.index}"
+  hcloud_ssh_key     = var.hcloud_ssh_key
+  server_type        = var.worker_server_type
+  image              = var.image
+  location           = var.location
+  kubernetes_version = var.kubernetes_version
 
   labels       = merge(var.labels, { cluster = var.name, role = "worker" })
   firewall_ids = var.firewall_ids
