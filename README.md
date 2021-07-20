@@ -75,14 +75,36 @@ cluster will have to be manually reconfigured (e.g [like this](https://blog.scot
 
 ### Removing/replacing master nodes
 
-A first step before removing a control plane node is to remove it from the `etcd` cluster.
-If the node is still operational, the easiest way to do it is with `kubeadm`. Otherwise, it will have to be done manually with `etcdctl`. This is very important! If not done, new nodes will not be able to join, even if the `etcd` cluster has quorum.
+A first step before removing a control plane node is to remove its membership in the `etcd` cluster. **Read this section carefully before removing master nodes! If etcd membership is not removed from the prior to the node being shutdown, the whole cluster can become inoperable.** If the master node that is being removed is still functional, the easiest way to remove is by invoking the following command on the node:
 
 ```cmd
 kubeadm reset --force
 ```
 
-You may also need to manually remove the node, as the Hetzner Cloud Controller that is responsible for deleting defunct nodes may have been running on this very node (should not be an issue if `kubectl drain` was done first)
+If the node is already defunct, there are two cases to consider:
+
+- etcd cluster still has quorum (i.e. N/2+1 nodes are still functional), the membership of the defunct member can be manually removed with `etcdctl`, e.g.:
+  ```
+  $ kubectl exec -n kube-system etcd-surviving-master-node -- etcdctl \
+      --endpoints=https://[::1]:2379 \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/server.crt \
+      --key=/etc/kubernetes/pki/etcd/server.key member list
+  2a51630843ac2da6, started, defunct-master-node, https://[2a01:db8:2::1]:2380, https://[2a01:db8:2::1]:2379, false
+  7f196e4d62a04497, started, surviving-master-node, https://[2a01:db8:1::1]:2380, https://[2a01:db8:1::1]:2379, false
+
+  $ kubectl exec -n kube-system etcd-surviving-master-node -- etcdctl \
+      --endpoints=https://[::1]:2379 \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/server.crt \
+      --key=/etc/kubernetes/pki/etcd/server.key member remove 2a51630843ac2da6
+  Member 2a51630843ac2da6 removed from cluster 46b13f81dcebb93d
+  ```
+
+- etcd cluster no longer has quorum, e.g. a single master node is gone out of a 2-node cluster. In this case the etcd cluster will need to be rebuilt from snapshot, following the steps for [disaster recovery](https://etcd.io/docs/v3.4/op-guide/recovery/). Data loss may have occured.
+
+
+You may also need to manually remove the Node object, as the Hetzner Cloud Controller that is responsible for deleting defunct nodes may have been running on this very node (should not be an issue if `kubectl drain` was done first)
 
 ```
 kubectl delete node <node name>
