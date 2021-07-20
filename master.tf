@@ -99,6 +99,15 @@ resource "null_resource" "master_join" {
   provisioner "local-exec" {
     command = <<EOT
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+          root@${local.kubeadm_host} 'kubeadm init phase upload-certs \
+            --upload-certs \
+            --certificate-key ${random_id.certificate_key.hex}'
+    EOT
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         root@${local.kubeadm_host} \
         'echo $(kubeadm token create --print-join-command --ttl=60m) \
         --apiserver-advertise-address ${local.adverise_addresses[count.index]} \
