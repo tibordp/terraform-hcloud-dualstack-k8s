@@ -40,6 +40,8 @@ module "k8s" {
   master_server_type = "cx31"
   worker_server_type = "cx31"
   worker_count       = 2
+
+  kubernetes_version = "1.22.0"
 }
 
 output "kubeconfig" {
@@ -58,9 +60,9 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME           STATUS   ROLES                  AGE   VERSION
-k8s-master-0   Ready    control-plane,master   31m   v1.21.1
-k8s-worker-0   Ready    <none>                 31m   v1.21.1
-k8s-worker-1   Ready    <none>                 31m   v1.21.1
+k8s-master-0   Ready    control-plane,master   31m   v1.22.0
+k8s-worker-0   Ready    <none>                 31m   v1.22.0
+k8s-worker-1   Ready    <none>                 31m   v1.22.0
 ```
 
 ## High availability setup
@@ -75,7 +77,7 @@ cluster will have to be manually reconfigured (e.g [like this](https://blog.scot
 
 ### Removing/replacing master nodes
 
-A first step before removing a control plane node is to remove its membership in the `etcd` cluster. **Read this section carefully before removing master nodes! If etcd membership is not removed from the prior to the node being shutdown, the whole cluster can become inoperable.** If the master node that is being removed is still functional, the easiest way to remove is by invoking the following command on the node:
+A first step before removing a control plane node is to remove its membership in the `etcd` cluster. **Read this section carefully before removing master nodes! If etcd membership is not removed from the prior to the node being shutdown, the whole cluster can potentially become inoperable.** If the master node that is being removed is still functional, the easiest way to remove is by invoking the following command on the node:
 
 ```cmd
 kubeadm reset --force
@@ -100,6 +102,8 @@ If the node is already defunct, there are two cases to consider:
       --key=/etc/kubernetes/pki/etcd/server.key member remove 2a51630843ac2da6
   Member 2a51630843ac2da6 removed from cluster 46b13f81dcebb93d
   ```
+
+  It is important to remove failed members from etcd even if quorum is still present as new master nodes will not be able to join until etcd cluster is healthy.
 
 - etcd cluster no longer has quorum, e.g. a single master node is gone out of a 2-node cluster. In this case the etcd cluster will need to be rebuilt from snapshot, following the steps for [disaster recovery](https://etcd.io/docs/v3.4/op-guide/recovery/). Data loss may have occured.
 

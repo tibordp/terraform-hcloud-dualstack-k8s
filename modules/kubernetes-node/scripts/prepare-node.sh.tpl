@@ -21,24 +21,23 @@ sudo sysctl --system
 sudo apt-get update -qq
 sudo apt-get install -qq apt-transport-https ca-certificates curl gnupg lsb-release ipvsadm wireguard
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-echo  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | \
-  sudo tee /etc/apt/sources.list.d/kubernetes.list
+  sudo tee /etc/apt/sources.list.d/kubernetes.list >/dev/null
 
 # Install container runtime and Kubernetes
 sudo apt-get update -qq
 sudo apt-get install -qq containerd.io kubelet=${kubernetes_version}-00 kubeadm=${kubernetes_version}-00 kubectl=${kubernetes_version}-00
-apt-mark hold kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
 
 # Enable systemd cgroups driver
 sudo mkdir -p /etc/containerd
 containerd config default | \
-  perl -i -pe 's/(\s+)(\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\])/\1\2\n\1  SystemdCgroup = true/g' | \
-  sudo tee /etc/containerd/config.toml > /dev/null
+  perl -pe 's/(\s+)(\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\])/\1\2\n\1  SystemdCgroup = true/g' | \
+  sudo tee /etc/containerd/config.toml >/dev/null
 
-# Necessary for out-of-tree cloud providers as of 1.21.1 (soon to be deprecated)
 cat <<EOF | sudo tee /etc/systemd/system/kubelet.service.d/20-hcloud.conf > /dev/null
 [Service]
 Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external --node-ip=::"

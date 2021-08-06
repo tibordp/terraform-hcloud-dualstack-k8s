@@ -128,7 +128,7 @@ variable "primary_ip_family" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.21.2)"
+  description = "Version of Kubernetes to install (default: 1.22.0)"
   type        = string
-  default     = "1.21.2"
+  default     = "1.22.0"
 }
