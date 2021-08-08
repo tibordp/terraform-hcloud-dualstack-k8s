@@ -14,4 +14,4 @@ kubectl apply -f hetzner_ccm.yaml
 kubectl -n kube-system create secret generic hcloud-csi \
     --from-literal=token="$HCLOUD_TOKEN"  \
     -o yaml --dry-run=client | kubectl apply -f-
-kubectl apply -f https://raw.githubusercontent.com/hetznercloud/csi-driver/v1.5.3/deploy/kubernetes/hcloud-csi.yml
+kubectl apply -f hetzner_csi.yaml

@@ -8,6 +8,7 @@ resource "null_resource" "install_addons" {
       filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
     })
     ccm_manifest = templatefile("${path.module}/templates/hetzner_ccm.yaml.tpl", {})
+    csi_manifest = templatefile("${path.module}/templates/hetzner_csi.yaml.tpl", {})
     hcloud_token = var.hcloud_token
   }
 
@@ -27,6 +28,11 @@ resource "null_resource" "install_addons" {
   provisioner "file" {
     content     = self.triggers.ccm_manifest
     destination = "/root/hetzner_ccm.yaml"
+  }
+
+  provisioner "file" {
+    content     = self.triggers.csi_manifest
+    destination = "/root/hetzner_csi.yaml"
   }
 
   provisioner "file" {
