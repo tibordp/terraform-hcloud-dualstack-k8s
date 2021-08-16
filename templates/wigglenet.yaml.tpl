@@ -54,7 +54,7 @@ spec:
       serviceAccountName: wigglenet
       containers:
       - name: wigglenet
-        image: tibordp/wigglenet:0.2.2
+        image: tibordp/wigglenet:0.2.3
         imagePullPolicy: Always
         env:
         - name: NODE_NAME
@@ -77,10 +77,6 @@ spec:
           # outside the cluster          
         - name: FILTER_IPV6
           value: "${filter_pod_ingress_ipv6}" 
-          # Optional interface from which to take the node's
-          # IP address (default: none)        
-        - name: NODE_IP_INTERFACES
-          value: "eth0"     
           # The source of IPv6 subnets for node pod networks
           # ("none", "spec", "file")
         - name: POD_CIDR_SOURCE_IPV4
@@ -92,7 +88,11 @@ spec:
           # The file from which to read the pod CIDRs if "file"
           # mode is used
         - name: POD_CIDR_SOURCE_PATH
-          value: "/etc/wigglenet/cidrs.txt"        
+          value: "/etc/wigglenet/cidrs.txt"      
+          # Use native routing instead of the overlay network
+          # for IPv4 traffic
+        - name: NATIVE_ROUTING_IPV4
+          value: "${native_routing_ipv4}"
         volumeMounts:
         - name: cfg
           mountPath: /etc/wigglenet
