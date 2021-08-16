@@ -164,7 +164,7 @@ See [example](./examples/cloud_init.tf) for how it can be used to manage worker 
 
 ## Using Hetzner Cloud private networks
 
-This module can be configured to use Hetzner Cloud private networks by specifying `use_hcloud_network`, `hcloud_network_id` and `hcloud_subnet_id` variables. In this case native routing will be used for IPv4 traffic and Wigglenet overlay will only be used for IPv6 traffic. Note that Hetzner private networks [are not encrypted](https://docs.hetzner.com/cloud/networks/faq#is-traffic-inside-hetzner-cloud-networks-encrypted), just segregated.
+This module can be configured to use Hetzner Cloud private networks by specifying `use_hcloud_network`, `hcloud_network_id` and `hcloud_subnet_id` variables. In this case native routing will be used for IPv4 traffic and Wigglenet overlay will only be used for IPv6 traffic (Hetnzer private networks are IPv4-only). Note that Hetzner private networks [are not encrypted](https://docs.hetzner.com/cloud/networks/faq#is-traffic-inside-hetzner-cloud-networks-encrypted), just segregated.
 
 See [example](./examples/private_network.tf) for more details.
 
