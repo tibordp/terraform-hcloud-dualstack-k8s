@@ -132,3 +132,21 @@ variable "kubernetes_version" {
   type        = string
   default     = "1.22.0"
 }
+
+variable "use_hcloud_network" {
+  description = "Use Hetzner private network (default: false)"
+  type        = bool
+  default     = false
+}
+
+variable "hcloud_network_id" {
+  description = "(Optional) Hetzner private network ID"
+  type        = string
+  default     = ""
+}
+
+variable "hcloud_subnet_id" {
+  description = "(Optional) Hetzner private network ID"
+  type        = string
+  default     = ""
+}

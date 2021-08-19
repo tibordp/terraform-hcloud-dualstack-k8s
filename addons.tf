@@ -6,8 +6,12 @@ resource "null_resource" "install_addons" {
   triggers = {
     wigglenet_manifest = templatefile("${path.module}/templates/wigglenet.yaml.tpl", {
       filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
+      native_routing_ipv4     = var.use_hcloud_network
     })
-    ccm_manifest = templatefile("${path.module}/templates/hetzner_ccm.yaml.tpl", {})
+    ccm_manifest = templatefile("${path.module}/templates/hetzner_ccm.yaml.tpl", {
+      use_hcloud_network = var.use_hcloud_network
+      pod_cidr_ipv4      = var.pod_cidr_ipv4
+    })
     csi_manifest = templatefile("${path.module}/templates/hetzner_csi.yaml.tpl", {})
     hcloud_token = var.hcloud_token
   }
@@ -43,7 +47,7 @@ resource "null_resource" "install_addons" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /root/install-addons.sh",
-      "HCLOUD_TOKEN='${var.hcloud_token}' /root/install-addons.sh",
+      "HCLOUD_TOKEN='${var.hcloud_token}' HCLOUD_NETWORK='${var.hcloud_network_id}' /root/install-addons.sh",
     ]
   }
 }

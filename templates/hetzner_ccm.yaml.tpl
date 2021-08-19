@@ -63,6 +63,10 @@ spec:
             - "--cloud-provider=hcloud"
             - "--leader-elect=false"
             - "--allow-untagged-cloud"
+%{ if use_hcloud_network ~} 
+            - "--allocate-node-cidrs=true"
+            - "--cluster-cidr=${pod_cidr_ipv4}"
+%{ endif ~}          
           resources:
             requests:
               cpu: 100m
@@ -77,5 +81,12 @@ spec:
                 secretKeyRef:
                   name: hcloud
                   key: token
+%{ if use_hcloud_network ~} 
+            - name: HCLOUD_NETWORK
+              valueFrom:
+                secretKeyRef:
+                  name: hcloud
+                  key: network
+%{ endif ~}
             - name: HCLOUD_INSTANCES_ADDRESS_FAMILY
               value: dualstack                  

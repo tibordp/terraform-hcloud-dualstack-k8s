@@ -10,7 +10,7 @@ Creates a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.i
   - the primary address family for the cluster is configurable, but defaults to IPv6, which is used for control plane communication
   - pods are allocated a private IPv4 address and a public IPv6 from the /64 subnet that Hetzner gives to every node. No masquerading needed for outbound IPv6 traffic! 🎉 (stateful firewall rules are still in place, so direct ingress traffic to pods is blocked by default, prefer to expose workloads through Service)
   - Dual-stack and IPv6-only `Service`s get a private (ULA) IPv6 address
-  - A full-mesh dynamic overlay network using Wireguard, so pod-to-pod traffic is encrypted (Hetzner private networks [are not encrypted](https://docs.hetzner.com/cloud/networks/faq#is-traffic-inside-hetzner-cloud-networks-encrypted), just segregated)
+  - A full-mesh dynamic overlay network using Wireguard, so pod-to-pod traffic is encrypted
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers and deleted nodes are cleaned up.
 - deploys the [Container Storage Interface](https://github.com/hetznercloud/csi-driver) for dynamic provisioning of volumes
 - supports dynamic worker node provisioning with cloud-init e.g. for use with [cluster autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/hetzner)
@@ -161,6 +161,12 @@ can be used to join additional worker nodes outside of Terraform (e.g. for use w
 The generated join configuration will be valid for 10 years, after which the bootstrap token will need to be regenerated (but you should probably rebuild the cluster with something better by then).
 
 See [example](./examples/cloud_init.tf) for how it can be used to manage worker separately from this module.
+
+## Using Hetzner Cloud private networks
+
+This module can be configured to use Hetzner Cloud private networks by specifying `use_hcloud_network`, `hcloud_network_id` and `hcloud_subnet_id` variables. In this case native routing will be used for IPv4 traffic and Wigglenet overlay will only be used for IPv6 traffic (Hetnzer private networks are IPv4-only). Note that Hetzner private networks [are not encrypted](https://docs.hetzner.com/cloud/networks/faq#is-traffic-inside-hetzner-cloud-networks-encrypted), just segregated.
+
+See [example](./examples/private_network.tf) for more details.
 
 ## Caveats
 
