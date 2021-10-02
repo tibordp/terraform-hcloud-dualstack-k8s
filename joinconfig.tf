@@ -4,10 +4,11 @@ locals {
 }
 
 module "join_config" {
-  source        = "matti/resource/shell"
-  version       = "1.3.0"
-  depends_on    = [null_resource.cluster_bootstrap]
-  fail_on_error = true
+  source            = "matti/resource/shell"
+  version           = "1.5.0"
+  depends_on        = [null_resource.cluster_bootstrap]
+  fail_on_error     = true
+  sensitive_outputs = true
 
   trigger = null_resource.cluster_bootstrap.id
 
@@ -17,7 +18,7 @@ module "join_config" {
   EOT
 }
 
-data "template_cloudinit_config" "join_config" {
+data "cloudinit_config" "join_config" {
   gzip          = true
   base64_encode = true
 

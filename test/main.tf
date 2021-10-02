@@ -2,7 +2,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.26.0"
+      version = "1.31.1"
     }
   }
 }
@@ -56,6 +56,7 @@ output "simple_cluster" {
     "/server: .*/",
     "server: https://${module.simple_cluster.masters[0].ipv4_address}:6443"
   )
+  sensitive = true
 }
 
 output "ha_cluster" {
@@ -64,4 +65,5 @@ output "ha_cluster" {
     "/server: .*/",
     "server: https://${module.ha_cluster.load_balancer.ipv4}:6443"
   )
+  sensitive = true
 }

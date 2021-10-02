@@ -4,15 +4,13 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.26.0"
+      version = "1.31.1"
     }
     aws = {
       source  = "hashicorp/aws"
       version = "~> 3.27"
     }
   }
-
-  required_version = ">= 0.14.9"
 }
 
 variable "hetzner_token" {}
@@ -65,5 +63,6 @@ resource "aws_route53_record" "api_server_a" {
 }
 
 output "kubeconfig" {
-  value = module.k8s.kubeconfig
+  value     = module.k8s.kubeconfig
+  sensitive = true
 }

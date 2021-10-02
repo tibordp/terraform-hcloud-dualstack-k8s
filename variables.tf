@@ -23,7 +23,7 @@ variable "worker_server_type" {
 variable "hcloud_token" {
   description = "Hetzner token for CCM and storage provisioner"
   type        = string
-  # sensitive   = true
+  sensitive   = true
 }
 
 variable "master_count" {
@@ -128,9 +128,9 @@ variable "primary_ip_family" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.22.0)"
+  description = "Version of Kubernetes to install (default: 1.22.2)"
   type        = string
-  default     = "1.22.0"
+  default     = "1.22.2"
 }
 
 variable "use_hcloud_network" {

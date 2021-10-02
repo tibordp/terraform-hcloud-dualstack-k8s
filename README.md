@@ -41,11 +41,12 @@ module "k8s" {
   worker_server_type = "cx31"
   worker_count       = 2
 
-  kubernetes_version = "1.22.0"
+  kubernetes_version = "1.22.2"
 }
 
 output "kubeconfig" {
-  value = module.k8s.kubeconfig
+  value     = module.k8s.kubeconfig
+  sensitive = true
 }
 ```
 
@@ -60,9 +61,9 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME           STATUS   ROLES                  AGE   VERSION
-k8s-master-0   Ready    control-plane,master   31m   v1.22.0
-k8s-worker-0   Ready    <none>                 31m   v1.22.0
-k8s-worker-1   Ready    <none>                 31m   v1.22.0
+k8s-master-0   Ready    control-plane,master   31m   v1.22.2
+k8s-worker-0   Ready    <none>                 31m   v1.22.2
+k8s-worker-1   Ready    <none>                 31m   v1.22.2
 ```
 
 ## High availability setup

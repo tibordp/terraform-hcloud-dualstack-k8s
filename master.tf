@@ -114,7 +114,7 @@ resource "null_resource" "master_join" {
         --control-plane \
         --certificate-key ${random_id.certificate_key.hex}' | \
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${module.master[count.index].ipv4_address} 'tee /root/join-command.sh'
+        root@${module.master[count.index].ipv4_address} 'tee /root/join-command.sh >/dev/null'
     EOT
   }
 

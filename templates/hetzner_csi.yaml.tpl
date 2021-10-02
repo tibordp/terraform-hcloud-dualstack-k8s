@@ -114,12 +114,9 @@ spec:
       containers:
         - name: csi-attacher
           image: k8s.gcr.io/sig-storage/csi-attacher:v3.2.1
-          args:
-            - --csi-address=/var/lib/csi/sockets/pluginproxy/csi.sock
-            - --v=5
           volumeMounts:
             - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
+              mountPath: /run/csi
           securityContext:
             privileged: true
             capabilities:
@@ -127,12 +124,9 @@ spec:
             allowPrivilegeEscalation: true
         - name: csi-resizer
           image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
-          args:
-            - --csi-address=/var/lib/csi/sockets/pluginproxy/csi.sock
-            - --v=5
           volumeMounts:
             - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
+              mountPath: /run/csi
           securityContext:
             privileged: true
             capabilities:
@@ -141,26 +135,26 @@ spec:
         - name: csi-provisioner
           image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
           args:
-            - --csi-address=/var/lib/csi/sockets/pluginproxy/csi.sock
             - --feature-gates=Topology=true
             - --default-fstype=ext4
-            - --v=5
           volumeMounts:
             - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
+              mountPath: /run/csi
           securityContext:
             privileged: true
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
         - name: hcloud-csi-driver
-          image: hetznercloud/hcloud-csi-driver:1.5.3
+          image: hetznercloud/hcloud-csi-driver:1.6.0
           imagePullPolicy: Always
           env:
             - name: CSI_ENDPOINT
-              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+              value: unix:///run/csi/socket
             - name: METRICS_ENDPOINT
               value: 0.0.0.0:9189
+            - name: ENABLE_METRICS
+              value: "true"
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -173,7 +167,7 @@ spec:
                   key: token
           volumeMounts:
             - name: socket-dir
-              mountPath: /var/lib/csi/sockets/pluginproxy/
+              mountPath: /run/csi
           ports:
             - containerPort: 9189
               name: metrics
@@ -196,10 +190,8 @@ spec:
         - name: liveness-probe
           imagePullPolicy: Always
           image: k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
-          args:
-            - --csi-address=/var/lib/csi/sockets/pluginproxy/csi.sock
           volumeMounts:
-            - mountPath: /var/lib/csi/sockets/pluginproxy/
+            - mountPath: /run/csi
               name: socket-dir
       volumes:
         - name: socket-dir
@@ -228,14 +220,21 @@ spec:
           operator: Exists
         - key: CriticalAddonsOnly
           operator: Exists
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "instance.hetzner.cloud/is-root-server"
+                    operator: NotIn
+                    values:
+                      - "true"
       serviceAccount: hcloud-csi
       containers:
         - name: csi-node-driver-registrar
           image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
           args:
-            - --v=5
-            - --csi-address=/csi/csi.sock
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.hetzner.cloud/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.hetzner.cloud/socket
           env:
             - name: KUBE_NODE_NAME
               valueFrom:
@@ -244,19 +243,21 @@ spec:
                   fieldPath: spec.nodeName
           volumeMounts:
             - name: plugin-dir
-              mountPath: /csi
+              mountPath: /run/csi
             - name: registration-dir
               mountPath: /registration
           securityContext:
             privileged: true
         - name: hcloud-csi-driver
-          image: hetznercloud/hcloud-csi-driver:1.5.3
+          image: hetznercloud/hcloud-csi-driver:1.6.0
           imagePullPolicy: Always
           env:
             - name: CSI_ENDPOINT
-              value: unix:///csi/csi.sock
+              value: unix:///run/csi/socket
             - name: METRICS_ENDPOINT
               value: 0.0.0.0:9189
+            - name: ENABLE_METRICS
+              value: "true"
             - name: HCLOUD_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -272,7 +273,7 @@ spec:
               mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
             - name: plugin-dir
-              mountPath: /csi
+              mountPath: /run/csi
             - name: device-dir
               mountPath: /dev
           securityContext:
@@ -294,10 +295,8 @@ spec:
         - name: liveness-probe
           imagePullPolicy: Always
           image: k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
-          args:
-            - --csi-address=/csi/csi.sock
           volumeMounts:
-            - mountPath: /csi
+            - mountPath: /run/csi
               name: plugin-dir
       volumes:
         - name: kubelet-dir
