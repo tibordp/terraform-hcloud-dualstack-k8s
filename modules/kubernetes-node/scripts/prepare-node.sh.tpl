@@ -18,8 +18,8 @@ EOF
 sudo sysctl --system
 
 # Install prerequisites
-sudo apt-get update -qq
-sudo apt-get install -qq apt-transport-https ca-certificates curl gnupg lsb-release ipvsadm wireguard
+sudo apt-get -qq update
+sudo apt-get -qq install apt-transport-https ca-certificates curl gnupg lsb-release ipvsadm wireguard
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
@@ -28,8 +28,8 @@ echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https:/
   sudo tee /etc/apt/sources.list.d/kubernetes.list >/dev/null
 
 # Install container runtime and Kubernetes
-sudo apt-get update -qq
-sudo apt-get install -qq containerd.io kubelet=${kubernetes_version}-00 kubeadm=${kubernetes_version}-00 kubectl=${kubernetes_version}-00
+sudo apt-get -qq update
+sudo apt-get -qq install containerd.io kubelet=${kubernetes_version}-00 kubeadm=${kubernetes_version}-00 kubectl=${kubernetes_version}-00
 sudo apt-mark hold kubelet kubeadm kubectl
 
 # Enable systemd cgroups driver

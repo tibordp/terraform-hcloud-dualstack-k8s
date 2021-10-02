@@ -4,7 +4,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "1.26.0"
+      version = "1.31.1"
     }
   }
 }
@@ -33,5 +33,6 @@ module "k8s" {
 }
 
 output "simple_kubeconfig" {
-  value = module.k8s.kubeconfig
+  value     = module.k8s.kubeconfig
+  sensitive = true
 }
