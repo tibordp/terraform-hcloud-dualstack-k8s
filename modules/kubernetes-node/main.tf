@@ -27,7 +27,7 @@ data "hcloud_image" "image" {
 resource "hcloud_server" "instance" {
   name        = var.name
   ssh_keys    = [var.hcloud_ssh_key]
-  image       = data.hcloud_image.image.id
+  image       = var.image
   location    = var.location
   server_type = var.server_type
 
