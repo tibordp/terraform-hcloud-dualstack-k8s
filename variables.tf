@@ -128,9 +128,9 @@ variable "primary_ip_family" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.22.2)"
+  description = "Version of Kubernetes to install (default: 1.23.4)"
   type        = string
-  default     = "1.22.2"
+  default     = "1.23.4"
 }
 
 variable "use_hcloud_network" {
