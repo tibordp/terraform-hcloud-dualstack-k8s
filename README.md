@@ -41,7 +41,7 @@ module "k8s" {
   worker_server_type = "cx31"
   worker_count       = 2
 
-  kubernetes_version = "1.22.2"
+  kubernetes_version = "1.23.4"
 }
 
 output "kubeconfig" {
@@ -61,10 +61,21 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME           STATUS   ROLES                  AGE   VERSION
-k8s-master-0   Ready    control-plane,master   31m   v1.22.2
-k8s-worker-0   Ready    <none>                 31m   v1.22.2
-k8s-worker-1   Ready    <none>                 31m   v1.22.2
+k8s-master-0   Ready    control-plane,master   31m   v1.23.4
+k8s-worker-0   Ready    <none>                 31m   v1.23.4
+k8s-worker-1   Ready    <none>                 31m   v1.23.4
 ```
+
+## Supported base images
+
+The module should work on most major RPM and DEB distros. It been tested on these base images, others may work as well, but have not been tested:
+
+- Ubuntu 20.04 (`ubuntu-20.04`)
+- Debian 11 (`debian-11`)
+- Centos Stream 8 (`centos-stream-8`)
+- Rocky Linux 8 (`rocky-8`)
+
+Fedora 35 is currently not supported due to Terraform SSH issue (see https://github.com/hashicorp/terraform/issues/30134).
 
 ## High availability setup
 

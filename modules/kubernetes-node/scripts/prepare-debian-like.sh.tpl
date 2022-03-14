@@ -1,17 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+# Kernel modules
+cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf > /dev/null
 overlay
 br_netfilter
 ip6_tables
 EOF
+sudo modprobe -a overlay br_netfilter ip6_tables
 
-sudo modprobe overlay
-sudo modprobe br_netfilter
-sudo modprobe ip6_tables
 # Setup required sysctl params, these persist across reboots.
-cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf > /dev/null
 net.bridge.bridge-nf-call-iptables  = 1
 net.ipv4.ip_forward                 = 1
 net.ipv6.conf.all.forwarding        = 1
@@ -37,7 +36,8 @@ sudo apt-mark hold kubelet kubeadm kubectl
 # Enable systemd cgroups driver
 sudo mkdir -p /etc/containerd
 containerd config default | \
-  perl -pe 's/(\s+)(\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\])/\1\2\n\1  SystemdCgroup = true/g' | \
+  grep -v 'SystemdCgroup' | \
+  sed -re 's/(\s+)(\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\])/\1\2\n\1  SystemdCgroup = true/g' | \
   sudo tee /etc/containerd/config.toml >/dev/null
 
 cat <<EOF | sudo tee /etc/systemd/system/kubelet.service.d/20-hcloud.conf > /dev/null

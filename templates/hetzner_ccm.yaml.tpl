@@ -51,12 +51,14 @@ spec:
         # cloud controller manages should be able to run on masters
         - key: "node-role.kubernetes.io/master"
           effect: NoSchedule
+          operator: Exists          
         - key: "node-role.kubernetes.io/control-plane"
           effect: NoSchedule
+          operator: Exists          
         - key: "node.kubernetes.io/not-ready"
           effect: "NoSchedule"
       containers:
-        - image: hetznercloud/hcloud-cloud-controller-manager:v1.12.0
+        - image: hetznercloud/hcloud-cloud-controller-manager:v1.12.1
           name: hcloud-cloud-controller-manager
           command:
             - "/bin/hcloud-cloud-controller-manager"
