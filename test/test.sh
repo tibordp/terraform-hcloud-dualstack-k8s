@@ -17,7 +17,7 @@ teardown_cluster() {
 
 case "$1" in
 kubectl)
-    curl -LO https://dl.k8s.io/release/v1.23.4/bin/linux/amd64/kubectl
+    curl -LO https://dl.k8s.io/release/v1.24.0/bin/linux/amd64/kubectl
     chmod +x kubectl
     ;;
 setup)
@@ -29,10 +29,12 @@ setup)
     setup_cluster "$(pwd)/ha_cluster.conf"
     ;;
 teardown)
-    # Try to delete the load-balancers first, as they will not be to deleted otherwise. Do not fail if
-    # it fails, otherwise 
+    # Try to delete the load-balancers and PVCs first, as they will not be to deleted otherwise. 
+    # Do not fail if it fails 
     teardown_cluster "$(pwd)/simple_cluster.conf" || true
     teardown_cluster "$(pwd)/ha_cluster.conf" || true
+
+    sleep 30
     
     # Disable locking in case `terraform apply` was interrupted
     terraform destroy -auto-approve -lock=false

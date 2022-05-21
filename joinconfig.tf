@@ -1,19 +1,9 @@
 locals {
   # Bootstrap token valid for 10 years
   bootstrap_token_ttl = 10 * 365 * 24
-  provision_scripts = {
-    ubuntu = "prepare-debian-like.sh.tpl",
-    debian = "prepare-debian-like.sh.tpl",
-    centos = "prepare-centos-like.sh.tpl",
-    rocky  = "prepare-centos-like.sh.tpl",
-  }
-  provision_script = templatefile("${path.module}/modules/kubernetes-node/scripts/${local.provision_scripts[data.hcloud_image.image.os_flavor]}", {
+  provision_script = templatefile("${path.module}/modules/kubernetes-node/scripts/prepare-node.sh.tpl", {
     kubernetes_version = var.kubernetes_version
   })
-}
-
-data "hcloud_image" "image" {
-  name = var.image
 }
 
 module "join_config" {

@@ -8,20 +8,9 @@ terraform {
 }
 
 locals {
-  provision_scripts = {
-    ubuntu = "prepare-debian-like.sh.tpl",
-    debian = "prepare-debian-like.sh.tpl",
-    centos = "prepare-centos-like.sh.tpl",
-    fedora = "prepare-centos-like.sh.tpl",
-    rocky  = "prepare-centos-like.sh.tpl",
-  }
-  provision_script = templatefile("${path.module}/scripts/${local.provision_scripts[data.hcloud_image.image.os_flavor]}", {
+  provision_script = templatefile("${path.module}/scripts/prepare-node.sh.tpl", {
     kubernetes_version = var.kubernetes_version
   })
-}
-
-data "hcloud_image" "image" {
-  name = var.image
 }
 
 resource "hcloud_server" "instance" {
@@ -33,6 +22,10 @@ resource "hcloud_server" "instance" {
 
   firewall_ids = var.firewall_ids
   labels       = var.labels
+
+  lifecycle {
+    ignore_changes = [image]
+  }
 
   connection {
     host        = hcloud_server.instance.ipv4_address

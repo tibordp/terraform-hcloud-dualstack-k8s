@@ -69,9 +69,9 @@ variable "worker_count" {
 }
 
 variable "image" {
-  description = "Image for the nodes (default: ubuntu-20.04)"
+  description = "Image for the nodes (default: ubuntu-22.04)"
   type        = string
-  default     = "ubuntu-20.04"
+  default     = "ubuntu-22.04"
 }
 
 variable "location" {
@@ -128,9 +128,9 @@ variable "primary_ip_family" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.23.4)"
+  description = "Version of Kubernetes to install (default: 1.24.0)"
   type        = string
-  default     = "1.23.4"
+  default     = "1.24.0"
 }
 
 variable "use_hcloud_network" {
