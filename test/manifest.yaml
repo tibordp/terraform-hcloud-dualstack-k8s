@@ -1,3 +1,14 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: persistent-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,6 +31,13 @@ spec:
           ports:
             - containerPort: 80
               name: http
+          volumeMounts:
+            - name: persistent-data
+              mountPath: /var/lib/persistent-data
+      volumes:
+        - name: persistent-data
+          persistentVolumeClaim:
+            claimName: persistent-data
 ---
 apiVersion: v1
 kind: Service
@@ -34,5 +52,5 @@ spec:
   selector:
     app: nginx
   ports:
-  - port: 80
-    targetPort: 80
+    - port: 80
+      targetPort: 80

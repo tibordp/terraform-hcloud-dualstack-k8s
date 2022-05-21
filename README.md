@@ -41,7 +41,7 @@ module "k8s" {
   worker_server_type = "cx31"
   worker_count       = 2
 
-  kubernetes_version = "1.23.4"
+  kubernetes_version = "1.24.0"
 }
 
 output "kubeconfig" {
@@ -61,9 +61,9 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME           STATUS   ROLES                  AGE   VERSION
-k8s-master-0   Ready    control-plane,master   31m   v1.23.4
-k8s-worker-0   Ready    <none>                 31m   v1.23.4
-k8s-worker-1   Ready    <none>                 31m   v1.23.4
+k8s-master-0   Ready    control-plane,master   31m   v1.24.0
+k8s-worker-0   Ready    <none>                 31m   v1.24.0
+k8s-worker-1   Ready    <none>                 31m   v1.24.0
 ```
 
 ## Supported base images

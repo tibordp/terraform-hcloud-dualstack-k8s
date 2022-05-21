@@ -12,8 +12,6 @@ localAPIEndpoint:
 kind: ClusterConfiguration
 apiVersion: kubeadm.k8s.io/v1beta2
 kubernetesVersion: "v${kubernetes_version}"
-featureGates:
-  IPv6DualStack: true
 apiServer:
   certSANs:
 %{ for san in apiserver_cert_sans ~}
