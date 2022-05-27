@@ -31,7 +31,7 @@ Create a simple Kubernetes cluster:
 ```hcl
 module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "1.0.0"
+  version = "1.0.1"
 
   name               = "k8s"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
@@ -60,10 +60,10 @@ and check the access by viewing the created cluster nodes:
 
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
-NAME           STATUS   ROLES                  AGE   VERSION
-k8s-master-0   Ready    control-plane,master   31m   v1.24.0
-k8s-worker-0   Ready    <none>                 31m   v1.24.0
-k8s-worker-1   Ready    <none>                 31m   v1.24.0
+NAME           STATUS   ROLES           AGE   VERSION
+k8s-master-0   Ready    control-plane   31m   v1.24.0
+k8s-worker-0   Ready    <none>          31m   v1.24.0
+k8s-worker-1   Ready    <none>          31m   v1.24.0
 ```
 
 ## Supported base images
@@ -134,7 +134,7 @@ First master node is special in that it is used by the provisioning process (e.g
 ```hcl
 module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "1.0.0"
+  version = "1.0.1"
 
   ...
  
