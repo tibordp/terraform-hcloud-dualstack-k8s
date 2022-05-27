@@ -76,7 +76,7 @@ The module should work on most major RPM and DEB distros. It been tested on thes
 - Centos Stream 8 (`centos-stream-8`)
 - Centos Stream 9 (`centos-stream-9`)
 - Rocky Linux 8 (`rocky-8`)
-- Fedora 35 (`fedora-35`, needs to be passed by ID as it is deprecated - [see issue](https://github.com/hetznercloud/terraform-provider-hcloud/issues/527))
+- Fedora 36 (`fedora-36`)
 
 Others may work as well, but have not been tested.
 
