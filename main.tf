@@ -4,7 +4,7 @@ terraform {
       source  = "hetznercloud/hcloud"
       version = "~> 1.31"
     }
-    template = {
+    cloudinit = {
       source  = "hashicorp/cloudinit"
       version = "2.2.0"
     }

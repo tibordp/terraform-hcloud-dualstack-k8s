@@ -41,7 +41,7 @@ module "k8s" {
   worker_server_type = "cx31"
   worker_count       = 2
 
-  kubernetes_version = "1.24.0"
+  kubernetes_version = "1.25.0"
 }
 
 output "kubeconfig" {
@@ -61,9 +61,9 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME           STATUS   ROLES           AGE   VERSION
-k8s-master-0   Ready    control-plane   31m   v1.24.0
-k8s-worker-0   Ready    <none>          31m   v1.24.0
-k8s-worker-1   Ready    <none>          31m   v1.24.0
+k8s-master-0   Ready    control-plane   31m   v1.25.0
+k8s-worker-0   Ready    <none>          31m   v1.25.0
+k8s-worker-1   Ready    <none>          31m   v1.25.0
 ```
 
 ## Supported base images
@@ -137,7 +137,7 @@ module "k8s" {
   version = "1.0.1"
 
   ...
- 
+
   kubeadm_host = "<ip address of another master node>"
 }
 ```
@@ -157,7 +157,7 @@ TLS certificate credentials form the output can be used to chain other Terraform
 
 provider "kubernetes" {
   host = module.k8s.apiserver_url
-  
+
   # For a single-master cluster, this will be an IPv6 URL. For IPv4, this can
   # also be used
   # host = "https://${module.k8s.masters[0].ipv4_address}:6443"
@@ -203,6 +203,6 @@ In addition some caveats for dual-stack clusters in general:
 - the apiserver Service (`kubernetes.default.svc.cluster.local`) has to be single-stack, as `--apiserver-advertise-address` does not support dual-stack yet. The default address family for the cluster can be selected with `primary_ip_family` variable (defaults to `ipv6`).
 
 
-## Acknowledgements 
+## Acknowledgements
 
 Some parts, including this README, adapted from [JWDobken/terraform-hcloud-kubernetes](https://github.com/JWDobken/terraform-hcloud-kubernetes) by Joost Döbken.
