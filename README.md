@@ -31,7 +31,7 @@ Create a simple Kubernetes cluster:
 ```hcl
 module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "1.0.1"
+  version = "1.1.0"
 
   name               = "k8s"
   hcloud_ssh_key     = hcloud_ssh_key.key.id
@@ -134,7 +134,7 @@ First master node is special in that it is used by the provisioning process (e.g
 ```hcl
 module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "1.0.1"
+  version = "1.1.0"
 
   ...
 
