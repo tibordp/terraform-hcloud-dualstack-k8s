@@ -38,10 +38,6 @@ module "cluster" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   hcloud_token   = var.hetzner_token
   location       = "hel1"
-
-  server_type = "cx31"
-
-  kubernetes_version = "1.27.1"
 }
 
 module "worker_nodes" {
@@ -54,8 +50,6 @@ module "worker_nodes" {
   name           = "k8s-worker-${count.index}"
   hcloud_ssh_key = hcloud_ssh_key.key.id
   location       = "hel1"
-
-  server_type = "cx31"
 }
 
 output "kubeconfig" {
@@ -148,7 +142,7 @@ First control plane node is special in that it is used by the provisioning proce
 ```hcl
 module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "1.1.0"
+  version = "2.0.0"
 
   ...
 

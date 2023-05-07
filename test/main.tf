@@ -27,8 +27,6 @@ module "simple_cluster" {
   hcloud_token   = var.hetzner_token
   location       = "hel1"
   server_type    = "cx21"
-
-  worker_count = 1
 }
 
 module "simple_worker_node" {
