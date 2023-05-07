@@ -1,36 +1,40 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ "$EUID" -ne 0 ]; then 
+if [ "$EUID" -ne 0 ]; then
   echo "This script must be run as root"
   exit 1
 fi
 
 os_id="$(. /etc/os-release && echo $ID)"
-if [ -f "/etc/debian_version" ]; then 
+if [ -f "/etc/debian_version" ]; then
 	is_debian_like=1
-else 
+else
 	is_debian_like=0
 fi
 
 install_prerequisites() {
-	if [ $is_debian_like == 1 ]; then 
+	if [ $is_debian_like == 1 ]; then
+		export DEBIAN_FRONTEND=noninteractive
+
 		# Install prerequisites
 		apt-get -qq update
+		apt-get -qq upgrade
 		apt-get -qq install apt-transport-https ca-certificates curl gnupg lsb-release ipvsadm wireguard apparmor
 		curl -fsSL https://download.docker.com/linux/$os_id/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 		curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
-		echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$os_id $(lsb_release -cs) stable" \
+		echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$os_id $(lsb_release -cs) stable" \
 			>/etc/apt/sources.list.d/docker.list
 		echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" \
 			>/etc/apt/sources.list.d/kubernetes.list
 
 		# Install container runtime
 		apt-get -qq update
-		apt-get -qq install containerd.io 
-	else 
+		apt-get -qq install containerd.io
+	else
 		# Install prerequisites
-		
+		dnf -qy upgrade
+
 		cat <<-EOF > /etc/yum.repos.d/kubernetes.repo
 			[kubernetes]
 			name=Kubernetes
@@ -104,7 +108,7 @@ configure_containerd() {
 }
 
 install_kubernetes() {
-	if [ $is_debian_like == 1 ]; then 
+	if [ $is_debian_like == 1 ]; then
 		apt-get -qq install kubelet=${kubernetes_version}-00 kubeadm=${kubernetes_version}-00 kubectl=${kubernetes_version}-00
 		apt-mark hold kubelet kubeadm kubectl
 
@@ -121,7 +125,7 @@ install_kubernetes() {
 			# https://src.fedoraproject.org/rpms/containernetworking-plugins/blob/rawhide/f/containernetworking-plugins.spec
 			mkdir -p /opt/cni
 			ln -s /usr/libexec/cni/ /opt/cni/bin
-		fi 
+		fi
 
 		echo 'KUBELET_EXTRA_ARGS=--cloud-provider=external --node-ip=::' > /etc/sysconfig/kubelet
 		dnf -qy install kubelet-${kubernetes_version}-0 kubeadm-${kubernetes_version}-0 kubectl-${kubernetes_version}-0 --disableexcludes=kubernetes

@@ -54,8 +54,8 @@ spec:
       serviceAccountName: wigglenet
       containers:
       - name: wigglenet
-        image: tibordp/wigglenet:v0.3.2
-        imagePullPolicy: Always
+        image: ghcr.io/tibordp/wigglenet:v0.4.1
+        imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME
           valueFrom:
@@ -66,7 +66,7 @@ spec:
         - name: MASQUERADE_IPV4
           value: "true"
           # Masquerade outgoing IPv6 traffic not destined
-          # to pod on another node          
+          # to pod on another node
         - name: MASQUERADE_IPV6
           value: "false"
           # Filter direct IPv4 traffic to pods from
@@ -74,9 +74,9 @@ spec:
         - name: FILTER_IPV4
           value: "false"
           # Filter direct IPv6 traffic to pods from
-          # outside the cluster          
+          # outside the cluster
         - name: FILTER_IPV6
-          value: "${filter_pod_ingress_ipv6}" 
+          value: "${filter_pod_ingress_ipv6}"
           # The source of IPv6 subnets for node pod networks
           # ("none", "spec", "file")
         - name: POD_CIDR_SOURCE_IPV4
@@ -88,7 +88,7 @@ spec:
           # The file from which to read the pod CIDRs if "file"
           # mode is used
         - name: POD_CIDR_SOURCE_PATH
-          value: "/etc/wigglenet/cidrs.txt"      
+          value: "/etc/wigglenet/cidrs.txt"
           # Use native routing instead of the overlay network
           # for IPv4 traffic
         - name: NATIVE_ROUTING_IPV4

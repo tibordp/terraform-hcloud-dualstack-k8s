@@ -18,8 +18,8 @@ resource "hcloud_load_balancer_service" "control_plane" {
 }
 
 resource "hcloud_load_balancer_target" "control_plane_target" {
-  count            = local.use_load_balancer ? var.master_count : 0
+  count            = local.use_load_balancer ? var.control_plane_count : 0
   type             = "server"
   load_balancer_id = hcloud_load_balancer.control_plane[0].id
-  server_id        = module.master[count.index].id
+  server_id        = module.control_plane[count.index].id
 }

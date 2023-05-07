@@ -1,4 +1,4 @@
-# A dual-stack cluster with a highly-available control plane using a 
+# A dual-stack cluster with a highly-available control plane using a
 # Hetzner Cloud load balancer.
 
 terraform {
@@ -24,15 +24,15 @@ resource "hcloud_ssh_key" "key" {
 module "ha_cluster" {
   source = "tibordp/dualstack-k8s/hcloud"
 
-  name               = "k8s"
-  hcloud_ssh_key     = hcloud_ssh_key.key.id
-  hcloud_token       = var.hetzner_token
-  location           = "hel1"
-  master_server_type = "cx31"
-  worker_server_type = "cx31"
+  name                      = "k8s"
+  hcloud_ssh_key            = hcloud_ssh_key.key.id
+  hcloud_token              = var.hetzner_token
+  location                  = "hel1"
+  control_plane_server_type = "cx31"
+  worker_server_type        = "cx31"
 
-  worker_count = 3
-  master_count = 3
+  worker_count        = 3
+  control_plane_count = 3
 
   control_plane_lb_type = "lb11"
 }

@@ -33,22 +33,22 @@ resource "hcloud_ssh_key" "key" {
 module "k8s" {
   source = "tibordp/dualstack-k8s/hcloud"
 
-  name               = "k8s"
-  hcloud_ssh_key     = hcloud_ssh_key.key.id
-  hcloud_token       = var.hetzner_token
-  location           = "nbg1"
-  master_server_type = "cpx31"
-  worker_server_type = "cpx31"
+  name                      = "k8s"
+  hcloud_ssh_key            = hcloud_ssh_key.key.id
+  hcloud_token              = var.hetzner_token
+  location                  = "nbg1"
+  control_plane_server_type = "cpx31"
+  worker_server_type        = "cpx31"
 
-  worker_count = 3
-  master_count = 3
+  worker_count        = 3
+  control_plane_count = 3
 
   control_plane_endpoint = "k8s.example.com"
 }
 
 resource "aws_route53_record" "api_server_aaaa" {
   name    = "k8s.example.com"
-  records = module.k8s.masters.*.ipv6_address
+  records = module.k8s.control_plane_nodes.*.ipv6_address
   ttl     = "60"
   type    = "AAAA"
   zone_id = "<zone id>"
@@ -56,7 +56,7 @@ resource "aws_route53_record" "api_server_aaaa" {
 
 resource "aws_route53_record" "api_server_a" {
   name    = "k8s.example.com"
-  records = module.k8s.masters.*.ipv4_address
+  records = module.k8s.control_plane_nodes.*.ipv4_address
   ttl     = "60"
   type    = "A"
   zone_id = "<zone id>"

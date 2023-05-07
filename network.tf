@@ -1,7 +1,7 @@
-resource "hcloud_server_network" "master_server_network" {
-  count = var.use_hcloud_network ? var.master_count : 0
+resource "hcloud_server_network" "control_plane_server_network" {
+  count = var.use_hcloud_network ? var.control_plane_count : 0
 
-  server_id = module.master[count.index].id
+  server_id = module.control_plane[count.index].id
   subnet_id = var.hcloud_subnet_id
 }
 

@@ -22,12 +22,12 @@ resource "hcloud_ssh_key" "key" {
 module "simple_cluster" {
   source = "./.."
 
-  name               = "simple"
-  hcloud_ssh_key     = hcloud_ssh_key.key.id
-  hcloud_token       = var.hetzner_token
-  location           = "hel1"
-  master_server_type = "cx21"
-  worker_server_type = "cx21"
+  name                      = "simple"
+  hcloud_ssh_key            = hcloud_ssh_key.key.id
+  hcloud_token              = var.hetzner_token
+  location                  = "hel1"
+  control_plane_server_type = "cx21"
+  worker_server_type        = "cx21"
 
   worker_count = 1
 }
@@ -35,17 +35,17 @@ module "simple_cluster" {
 module "ha_cluster" {
   source = "./.."
 
-  name               = "ha"
-  hcloud_ssh_key     = hcloud_ssh_key.key.id
-  hcloud_token       = var.hetzner_token
-  location           = "hel1"
-  master_server_type = "cx21"
-  worker_server_type = "cx21"
+  name                      = "ha"
+  hcloud_ssh_key            = hcloud_ssh_key.key.id
+  hcloud_token              = var.hetzner_token
+  location                  = "hel1"
+  control_plane_server_type = "cx21"
+  worker_server_type        = "cx21"
 
   control_plane_lb_type = "lb11"
 
-  worker_count = 1
-  master_count = 2
+  worker_count        = 1
+  control_plane_count = 2
 }
 
 
@@ -54,7 +54,7 @@ output "simple_cluster" {
   value = replace(
     module.simple_cluster.kubeconfig,
     "/server: .*/",
-    "server: https://${module.simple_cluster.masters[0].ipv4_address}:6443"
+    "server: https://${module.simple_cluster.control_plane_nodes[0].ipv4_address}:6443"
   )
   sensitive = true
 }

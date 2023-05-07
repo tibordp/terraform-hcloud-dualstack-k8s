@@ -5,7 +5,6 @@ metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
   name: hcloud-volumes
-  namespace: kube-system
 provisioner: csi.hetzner.cloud
 volumeBindingMode: WaitForFirstConsumer
 ---
@@ -168,7 +167,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: hcloud-csi
+    app: hcloud-csi-controller
   name: hcloud-csi-controller-metrics
   namespace: kube-system
 spec:
@@ -210,12 +209,14 @@ spec:
         app: hcloud-csi-controller
     spec:
       containers:
-        - image: k8s.gcr.io/sig-storage/csi-attacher:v3.2.1
+        - args:
+            - --default-fstype=ext4
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.1.0
           name: csi-attacher
           volumeMounts:
             - mountPath: /run/csi
               name: socket-dir
-        - image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
+        - image: registry.k8s.io/sig-storage/csi-resizer:v1.7.0
           name: csi-resizer
           volumeMounts:
             - mountPath: /run/csi
@@ -223,7 +224,7 @@ spec:
         - args:
             - --feature-gates=Topology=true
             - --default-fstype=ext4
-          image: k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
+          image: registry.k8s.io/sig-storage/csi-provisioner:v3.4.0
           name: csi-provisioner
           volumeMounts:
             - mountPath: /run/csi
@@ -247,7 +248,7 @@ spec:
                 secretKeyRef:
                   key: token
                   name: hcloud
-          image: hetznercloud/hcloud-csi-driver@sha256:0912cb9d9f16712303c4085857e5f8e8694861a11ff26a947e49f52631dcfab0
+          image: hetznercloud/hcloud-csi-driver:v2.3.2
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 5
@@ -267,7 +268,7 @@ spec:
           volumeMounts:
             - mountPath: /run/csi
               name: socket-dir
-        - image: k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
+        - image: registry.k8s.io/sig-storage/livenessprobe:v2.9.0
           imagePullPolicy: Always
           name: liveness-probe
           volumeMounts:
@@ -306,7 +307,7 @@ spec:
       containers:
         - args:
             - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.hetzner.cloud/socket
-          image: k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.7.0
           name: csi-node-driver-registrar
           volumeMounts:
             - mountPath: /run/csi
@@ -322,7 +323,7 @@ spec:
               value: 0.0.0.0:9189
             - name: ENABLE_METRICS
               value: "true"
-          image: hetznercloud/hcloud-csi-driver@sha256:0912cb9d9f16712303c4085857e5f8e8694861a11ff26a947e49f52631dcfab0
+          image: hetznercloud/hcloud-csi-driver:v2.3.2
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 5
@@ -349,7 +350,7 @@ spec:
               name: plugin-dir
             - mountPath: /dev
               name: device-dir
-        - image: k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
+        - image: registry.k8s.io/sig-storage/livenessprobe:v2.9.0
           imagePullPolicy: Always
           name: liveness-probe
           volumeMounts:
@@ -386,7 +387,7 @@ metadata:
   name: csi.hetzner.cloud
 spec:
   attachRequired: true
+  fsGroupPolicy: File
   podInfoOnMount: true
   volumeLifecycleModes:
     - Persistent
-  fsGroupPolicy: File
