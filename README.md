@@ -14,7 +14,7 @@ Creates a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.i
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers and deleted nodes are cleaned up.
 - deploys the [Container Storage Interface](https://github.com/hetznercloud/csi-driver) for dynamic provisioning of volumes
 - supports dynamic worker node provisioning with cloud-init e.g. for use with [cluster autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/hetzner)
-- supports both Intel and ARM servers
+- supports multiple worker node pools with different machine types
 
 ## Getting Started
 
@@ -30,21 +30,32 @@ resource "hcloud_ssh_key" "key" {
 Create a simple Kubernetes cluster:
 
 ```hcl
-module "k8s" {
+module "cluster" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "1.1.0"
+  version = "2.0.0"
 
   name           = "k8s"
   hcloud_ssh_key = hcloud_ssh_key.key.id
   hcloud_token   = var.hetzner_token
   location       = "hel1"
 
-  control_plane_server_type = "cx31"
-  worker_server_type        = "cx31"
-
-  worker_count = 2
+  server_type = "cx31"
 
   kubernetes_version = "1.27.1"
+}
+
+module "worker_nodes" {
+  source = "tibordp/dualstack-k8s/hcloud//modules/worker-node"
+  version = "2.0.0"
+
+  cluster = module.cluster
+  count  = 2
+
+  name           = "k8s-worker-${count.index}"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  location       = "hel1"
+
+  server_type = "cx31"
 }
 
 output "kubeconfig" {

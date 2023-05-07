@@ -1,11 +1,11 @@
+output "name" {
+  description = "name of the cluster"
+  value       = var.name
+}
+
 output "control_plane_nodes" {
   description = "control plane nodes"
   value       = module.control_plane
-}
-
-output "worker_nodes" {
-  description = "worker nodes"
-  value       = module.worker
 }
 
 output "load_balancer" {
@@ -43,5 +43,11 @@ output "kubeconfig" {
 output "join_user_data" {
   description = "cloud-init user data for additional worker nodes"
   value       = data.cloudinit_config.join_config.rendered
+  sensitive   = true
+}
+
+output "join_command" {
+  description = "kubeadm join command for additional worker nodes"
+  value       = module.join_config.stdout
   sensitive   = true
 }

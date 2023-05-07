@@ -21,31 +21,41 @@ resource "hcloud_ssh_key" "key" {
   public_key = file("~/.ssh/id_rsa.pub")
 }
 
-module "ha_cluster" {
+module "cluster" {
   source = "tibordp/dualstack-k8s/hcloud"
 
-  name                      = "k8s"
-  hcloud_ssh_key            = hcloud_ssh_key.key.id
-  hcloud_token              = var.hetzner_token
-  location                  = "hel1"
-  control_plane_server_type = "cx31"
-  worker_server_type        = "cx31"
+  name           = "k8s"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  hcloud_token   = var.hetzner_token
+  location       = "nbg1"
+  server_type    = "cpx31"
+  node_count     = 3
 
-  worker_count        = 3
-  control_plane_count = 3
+  control_plane_endpoint = "k8s.example.com"
+}
 
-  control_plane_lb_type = "lb11"
+module "workers" {
+  source = "tibordp/dualstack-k8s/hcloud//modules/worker-node"
+
+  cluster = module.cluster
+  count   = 3
+
+  name           = "k8s-worker-${count.index}"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  location       = "nbg1"
+
+  server_type = "cpx31"
 }
 
 output "load_balancer_ipv4" {
-  value = module.k8s.load_balancer.ipv4
+  value = module.cluster.load_balancer.ipv4
 }
 
 output "load_balancer_ipv6" {
-  value = module.k8s.load_balancer.ipv6
+  value = module.cluster.load_balancer.ipv6
 }
 
-output "ha_cluster_kubeconfig" {
-  value     = module.k8s.kubeconfig
+output "kubeconfig" {
+  value     = module.cluster.kubeconfig
   sensitive = true
 }
