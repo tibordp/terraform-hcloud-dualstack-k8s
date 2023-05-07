@@ -20,21 +20,36 @@ resource "hcloud_ssh_key" "key" {
   public_key = file("~/.ssh/id_rsa.pub")
 }
 
-module "k8s" {
+module "cluster" {
   source = "tibordp/dualstack-k8s/hcloud"
 
-  name                      = "k8s"
-  hcloud_ssh_key            = hcloud_ssh_key.key.id
-  hcloud_token              = vars.hetzner_token
-  location                  = "hel1"
-  control_plane_server_type = "cx31"
-  worker_server_type        = "cx31"
-  worker_count              = 2
+  name           = "k8s"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  hcloud_token   = vars.hetzner_token
+  location       = "hel1"
+  server_type    = "cx31"
 
   # The default pod_cidr_ipv6 is 10.96.0.0/16. This can be customized,
   # but it should be within the range of the private network. Also, it should
   # not overlap with the subnet specified below, as that subnet is used for nodes.
   # pod_cidr_ipv4 = "10.96.0.0/16"
+
+  use_hcloud_network = true
+  hcloud_network_id  = hcloud_network.my_net.id
+  hcloud_subnet_id   = hcloud_network_subnet.my_subnet.id
+}
+
+module "workers" {
+  source = "tibordp/dualstack-k8s/hcloud//modules/worker-node"
+
+  cluster = module.cluster
+  count   = 2
+
+  name           = "k8s-worker-${count.index}"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  location       = "hel1"
+
+  server_type = "cx31"
 
   use_hcloud_network = true
   hcloud_network_id  = hcloud_network.my_net.id
@@ -54,7 +69,7 @@ resource "hcloud_network_subnet" "my_subnet" {
   ip_range     = "10.0.0.0/16"
 }
 
-output "simple_kubeconfig" {
-  value     = module.k8s.kubeconfig
+output "kubeconfig" {
+  value     = module.cluster.kubeconfig
   sensitive = true
 }

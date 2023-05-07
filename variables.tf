@@ -8,14 +8,8 @@ variable "hcloud_ssh_key" {
   type        = string
 }
 
-variable "control_plane_server_type" {
-  description = "Server SKU (default: 'cx31')"
-  type        = string
-  default     = "cx31"
-}
-
-variable "worker_server_type" {
-  description = "Server SKU (default: 'cx31')"
+variable "server_type" {
+  description = "Server SKU for control plane nodes (default: 'cx31')"
   type        = string
   default     = "cx31"
 }
@@ -26,14 +20,14 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
-variable "control_plane_count" {
-  description = "Hetzner token for CCM and storage provisioner"
+variable "node_count" {
+  description = "Number of control plane nodes"
   type        = number
   default     = 1
 }
 
-variable "control_plane_lb_type" {
-  description = "(Optional) Hetzner token for CCM and storage provisioner"
+variable "load_balancer_type" {
+  description = "(Optional) Type of the load balancer for control plane nodes"
   type        = string
   default     = ""
 }
@@ -60,12 +54,6 @@ variable "service_cidr_ipv4" {
   description = "IPv4 CIDR for Services"
   type        = string
   default     = "172.16.0.0/16"
-}
-
-variable "worker_count" {
-  description = "Number of worker nodes"
-  type        = number
-  default     = 0
 }
 
 variable "image" {

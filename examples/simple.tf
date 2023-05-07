@@ -20,19 +20,30 @@ resource "hcloud_ssh_key" "key" {
   public_key = file("~/.ssh/id_rsa.pub")
 }
 
-module "k8s" {
+module "cluster" {
   source = "tibordp/dualstack-k8s/hcloud"
 
-  name                      = "k8s"
-  hcloud_ssh_key            = hcloud_ssh_key.key.id
-  hcloud_token              = vars.hetzner_token
-  location                  = "hel1"
-  control_plane_server_type = "cx31"
-  worker_server_type        = "cx31"
-  worker_count              = 2
+  name           = "k8s"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  hcloud_token   = vars.hetzner_token
+  location       = "hel1"
+  server_type    = "cx31"
+}
+
+module "workers" {
+  source = "tibordp/dualstack-k8s/hcloud//modules/worker-node"
+
+  cluster = module.cluster
+  count   = 2
+
+  name           = "k8s-worker-${count.index}"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  location       = "hel1"
+
+  server_type = "cx31"
 }
 
 output "simple_kubeconfig" {
-  value     = module.k8s.kubeconfig
+  value     = module.cluster.kubeconfig
   sensitive = true
 }

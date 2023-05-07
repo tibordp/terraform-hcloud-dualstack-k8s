@@ -19,12 +19,12 @@ locals {
 }
 
 module "control_plane" {
-  count  = var.control_plane_count
+  count  = var.node_count
   source = "./modules/kubernetes-node"
 
   name               = "${var.name}-control-plane-${count.index}"
   hcloud_ssh_key     = var.hcloud_ssh_key
-  server_type        = var.control_plane_server_type
+  server_type        = var.server_type
   image              = var.image
   location           = var.location
   kubernetes_version = var.kubernetes_version
@@ -78,7 +78,7 @@ resource "null_resource" "cluster_bootstrap" {
 }
 
 resource "null_resource" "control_plane_join" {
-  count = var.control_plane_count
+  count = var.node_count
 
   depends_on = [
     null_resource.cluster_bootstrap

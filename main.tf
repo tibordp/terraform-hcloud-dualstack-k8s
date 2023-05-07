@@ -10,7 +10,3 @@ terraform {
     }
   }
 }
-
-locals {
-  all_nodes = concat(module.control_plane, module.worker)
-}
