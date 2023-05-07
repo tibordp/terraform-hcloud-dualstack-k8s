@@ -32,8 +32,7 @@ module "simple_cluster" {
 }
 
 module "simple_worker_node" {
-  source  = "./../modules/worker-node"
-  version = "2.0.0"
+  source = "./../modules/worker-node"
 
   cluster = module.simple_cluster
 
@@ -47,11 +46,11 @@ module "simple_worker_node" {
 module "ha_cluster" {
   source = "./.."
 
-  name                      = "ha"
-  hcloud_ssh_key            = hcloud_ssh_key.key.id
-  hcloud_token              = var.hetzner_token
-  location                  = "hel1"
-  server_type = "cx21"
+  name           = "ha"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  hcloud_token   = var.hetzner_token
+  location       = "hel1"
+  server_type    = "cx21"
 
   load_balancer_type = "lb11"
 
@@ -59,8 +58,7 @@ module "ha_cluster" {
 }
 
 module "ha_worker_node" {
-  source  = "./../modules/worker-node"
-  version = "2.0.0"
+  source = "./../modules/worker-node"
 
   cluster = module.ha_cluster
 
@@ -70,7 +68,6 @@ module "ha_worker_node" {
 
   server_type = "cx21"
 }
-
 
 
 # GitHub Actions does not support IPv6 connectivity, so we need to hack the server endpoints
