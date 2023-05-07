@@ -14,6 +14,7 @@ Creates a Kubernetes cluster on the [Hetzner cloud](https://registry.terraform.i
 - deploys the [Controller Manager](https://github.com/hetznercloud/hcloud-cloud-controller-manager) so `LoadBalancer` services provision Hetzner load balancers and deleted nodes are cleaned up.
 - deploys the [Container Storage Interface](https://github.com/hetznercloud/csi-driver) for dynamic provisioning of volumes
 - supports dynamic worker node provisioning with cloud-init e.g. for use with [cluster autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/hetzner)
+- supports both Intel and ARM servers
 
 ## Getting Started
 
@@ -33,15 +34,17 @@ module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
   version = "1.1.0"
 
-  name               = "k8s"
-  hcloud_ssh_key     = hcloud_ssh_key.key.id
-  hcloud_token       = var.hetzner_token
-  location           = "hel1"
-  master_server_type = "cx31"
-  worker_server_type = "cx31"
-  worker_count       = 2
+  name           = "k8s"
+  hcloud_ssh_key = hcloud_ssh_key.key.id
+  hcloud_token   = var.hetzner_token
+  location       = "hel1"
 
-  kubernetes_version = "1.25.0"
+  control_plane_server_type = "cx31"
+  worker_server_type        = "cx31"
+
+  worker_count = 2
+
+  kubernetes_version = "1.27.1"
 }
 
 output "kubeconfig" {
@@ -60,39 +63,39 @@ and check the access by viewing the created cluster nodes:
 
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
-NAME           STATUS   ROLES           AGE   VERSION
-k8s-master-0   Ready    control-plane   31m   v1.25.0
-k8s-worker-0   Ready    <none>          31m   v1.25.0
-k8s-worker-1   Ready    <none>          31m   v1.25.0
+NAME                  STATUS   ROLES           AGE   VERSION
+k8s-control-plane-0   Ready    control-plane   31m   v1.27.1
+k8s-worker-0          Ready    <none>          31m   v1.27.1
+k8s-worker-1          Ready    <none>          31m   v1.27.1
 ```
 
 ## Supported base images
 
 The module should work on most major RPM and DEB distros. It been tested on these base images:
 
-- Ubuntu 20.04 (`ubuntu-20.04`)
 - Ubuntu 22.04 (`ubuntu-22.04`)
 - Debian 11 (`debian-11`)
 - Centos Stream 8 (`centos-stream-8`)
 - Centos Stream 9 (`centos-stream-9`)
 - Rocky Linux 8 (`rocky-8`)
-- Fedora 36 (`fedora-36`)
+- Rocky Linux 9 (`rocky-9`)
+- Fedora 37 (`fedora-37`)
 
 Others may work as well, but have not been tested.
 
 ## High availability setup
 
-This module can create a multi-master setup with a highly available control plane. There are two options available:
+This module can create a highly available control plane with multiple control plane nodes. There are two options available:
 
 - A Hetzner load balancer in front of the control-plane nodes (see [example](./examples/ha_load_balancer.tf))
-- External load balancer (or a DNS-based solution). Whatever is specified in `control_plane_endpoint` will be used as a API server endpoint and it is up to you to make sure request are routed to the master nodes  (see [example](./examples/ha_dns_name.tf))
+- External load balancer (or a DNS-based solution). Whatever is specified in `control_plane_endpoint` will be used as a API server endpoint and it is up to you to make sure request are routed to the control plane nodes  (see [example](./examples/ha_dns_name.tf))
 
-It is recommended to set up `control_plane_endpoint` (e.g. a DNS record) even if a single master node is used, as doing so will allow for additional master nodes to be added later. If this is not done, the
-cluster will have to be manually reconfigured (e.g [like this](https://blog.scottlowe.org/2019/08/12/converting-kubernetes-to-ha-control-plane/)) to use the new endpoint when new master nodes are added.
+It is recommended to set up `control_plane_endpoint` (e.g. a DNS record) even if a single control plane node is used, as doing so will allow for additional control plane nodes to be added later. If this is not done, the
+cluster will have to be manually reconfigured (e.g [like this](https://blog.scottlowe.org/2019/08/12/converting-kubernetes-to-ha-control-plane/)) to use the new endpoint when new control plane nodes are added.
 
-### Removing/replacing master nodes
+### Removing/replacing control plane nodes
 
-A first step before removing a control plane node is to remove its membership in the `etcd` cluster. **Read this section carefully before removing master nodes! If etcd membership is not removed from the prior to the node being shutdown, the whole cluster can potentially become inoperable.** If the master node that is being removed is still functional, the easiest way to remove is by invoking the following command on the node:
+A first step before removing a control plane node is to remove its membership in the `etcd` cluster. **Read this section carefully before removing control plane nodes! If etcd membership is not removed from the prior to the node being shutdown, the whole cluster can potentially become inoperable.** If the control plane node that is being removed is still functional, the easiest way to remove is by invoking the following command on the node:
 
 ```cmd
 kubeadm reset --force
@@ -102,15 +105,15 @@ If the node is already defunct, there are two cases to consider:
 
 - etcd cluster still has quorum (i.e. N/2+1 nodes are still functional), the membership of the defunct member can be manually removed with `etcdctl`, e.g.:
   ```
-  $ kubectl exec -n kube-system etcd-surviving-master-node -- etcdctl \
+  $ kubectl exec -n kube-system etcd-surviving-control-plane-node -- etcdctl \
       --endpoints=https://[::1]:2379 \
       --cacert=/etc/kubernetes/pki/etcd/ca.crt \
       --cert=/etc/kubernetes/pki/etcd/server.crt \
       --key=/etc/kubernetes/pki/etcd/server.key member list
-  2a51630843ac2da6, started, defunct-master-node, https://[2a01:db8:2::1]:2380, https://[2a01:db8:2::1]:2379, false
-  7f196e4d62a04497, started, surviving-master-node, https://[2a01:db8:1::1]:2380, https://[2a01:db8:1::1]:2379, false
+  2a51630843ac2da6, started, defunct-control-plane-node, https://[2a01:db8:2::1]:2380, https://[2a01:db8:2::1]:2379, false
+  7f196e4d62a04497, started, surviving-control-plane-node, https://[2a01:db8:1::1]:2380, https://[2a01:db8:1::1]:2379, false
 
-  $ kubectl exec -n kube-system etcd-surviving-master-node -- etcdctl \
+  $ kubectl exec -n kube-system etcd-surviving-control-plane-node -- etcdctl \
       --endpoints=https://[::1]:2379 \
       --cacert=/etc/kubernetes/pki/etcd/ca.crt \
       --cert=/etc/kubernetes/pki/etcd/server.crt \
@@ -118,9 +121,9 @@ If the node is already defunct, there are two cases to consider:
   Member 2a51630843ac2da6 removed from cluster 46b13f81dcebb93d
   ```
 
-  It is important to remove failed members from etcd even if quorum is still present as new master nodes will not be able to join until etcd cluster is healthy.
+  It is important to remove failed members from etcd even if quorum is still present as new control plane nodes will not be able to join until etcd cluster is healthy.
 
-- etcd cluster no longer has quorum, e.g. a single master node is gone out of a 2-node cluster. In this case the etcd cluster will need to be rebuilt from snapshot, following the steps for [disaster recovery](https://etcd.io/docs/v3.4/op-guide/recovery/). Data loss may have occured.
+- etcd cluster no longer has quorum, e.g. a single control plane node is gone out of a 2-node cluster. In this case the etcd cluster will need to be rebuilt from snapshot, following the steps for [disaster recovery](https://etcd.io/docs/v3.4/op-guide/recovery/). Data loss may have occured.
 
 
 You may also need to manually remove the Node object, as the Hetzner Cloud Controller that is responsible for deleting defunct nodes may have been running on this very node (should not be an issue if `kubectl drain` was done first)
@@ -129,7 +132,7 @@ You may also need to manually remove the Node object, as the Hetzner Cloud Contr
 kubectl delete node <node name>
 ```
 
-First master node is special in that it is used by the provisioning process (e.g. to get the bootstrap tokens for other nodes). If the first node is deleted, another server must be specified, otherwise provisioning operations will fail.
+First control plane node is special in that it is used by the provisioning process (e.g. to get the bootstrap tokens for other nodes). If the first node is deleted, another server must be specified, otherwise provisioning operations will fail.
 
 ```hcl
 module "k8s" {
@@ -138,14 +141,14 @@ module "k8s" {
 
   ...
 
-  kubeadm_host = "<ip address of another master node>"
+  kubeadm_host = "<ip address of another control plane node>"
 }
 ```
 
 Afterwards, the node can be replaced as usual, e.g.
 
 ```
-terraform taint module.k8s.module.master[0].hcloud_server.instance
+terraform taint module.k8s.module.control_plane_nodes[0].hcloud_server.instance
 terraform apply
 ```
 
@@ -158,9 +161,9 @@ TLS certificate credentials form the output can be used to chain other Terraform
 provider "kubernetes" {
   host = module.k8s.apiserver_url
 
-  # For a single-master cluster, this will be an IPv6 URL. For IPv4, this can
+  # For a single controlplane node cluster, this will be an IPv6 URL. For IPv4, this can
   # also be used
-  # host = "https://${module.k8s.masters[0].ipv4_address}:6443"
+  # host = "https://${module.k8s.control_plane_nodes[0].ipv4_address}:6443"
 
   client_certificate     = module.k8s.client_certificate_data
   client_key             = module.k8s.client_key_data

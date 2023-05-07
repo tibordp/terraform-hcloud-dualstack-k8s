@@ -1,15 +1,15 @@
-output "masters" {
-  description = "Master nodes"
-  value       = module.master
+output "control_plane_nodes" {
+  description = "control plane nodes"
+  value       = module.control_plane
 }
 
-output "workers" {
-  description = "Worker nodes"
+output "worker_nodes" {
+  description = "worker nodes"
   value       = module.worker
 }
 
 output "load_balancer" {
-  description = "Worker nodes"
+  description = "load balancer for the control plane"
   value       = local.use_load_balancer ? hcloud_load_balancer.control_plane[0] : null
 }
 

@@ -8,7 +8,7 @@ variable "hcloud_ssh_key" {
   type        = string
 }
 
-variable "master_server_type" {
+variable "control_plane_server_type" {
   description = "Server SKU (default: 'cx31')"
   type        = string
   default     = "cx31"
@@ -26,7 +26,7 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
-variable "master_count" {
+variable "control_plane_count" {
   description = "Hetzner token for CCM and storage provisioner"
   type        = number
   default     = 1
@@ -128,9 +128,9 @@ variable "primary_ip_family" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.25.0)"
+  description = "Version of Kubernetes to install (default: 1.27.1)"
   type        = string
-  default     = "1.25.0"
+  default     = "1.27.1"
 }
 
 variable "use_hcloud_network" {

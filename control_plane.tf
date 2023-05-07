@@ -1,11 +1,11 @@
 locals {
-  control_plane_endpoint_v6 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? hcloud_load_balancer.control_plane[0].ipv6 : module.master[0].ipv6_address)
+  control_plane_endpoint_v6 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? hcloud_load_balancer.control_plane[0].ipv6 : module.control_plane[0].ipv6_address)
 
-  control_plane_endpoint_v4 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? hcloud_load_balancer.control_plane[0].ipv4 : module.master[0].ipv4_address)
+  control_plane_endpoint_v4 = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? hcloud_load_balancer.control_plane[0].ipv4 : module.control_plane[0].ipv4_address)
 
-  control_plane_endpoint = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv6}]" : "[${module.master[0].ipv6_address}]")
+  control_plane_endpoint = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv6}]" : "[${module.control_plane[0].ipv6_address}]")
 
-  adverise_addresses = var.primary_ip_family == "ipv6" ? module.master.*.ipv6_address : module.master.*.ipv4_address
+  adverise_addresses = var.primary_ip_family == "ipv6" ? module.control_plane.*.ipv6_address : module.control_plane.*.ipv4_address
 
   # If using IP as an apiserver endpoint, add also the IPv4 SAN to the TLS certificate
   apiserver_cert_sans = concat(var.control_plane_endpoint != "" ? [
@@ -15,21 +15,21 @@ locals {
     local.control_plane_endpoint_v6
   ], var.apiserver_extra_sans)
 
-  kubeadm_host = var.kubeadm_host != "" ? var.kubeadm_host : module.master[0].ipv4_address
+  kubeadm_host = var.kubeadm_host != "" ? var.kubeadm_host : module.control_plane[0].ipv4_address
 }
 
-module "master" {
-  count  = var.master_count
+module "control_plane" {
+  count  = var.control_plane_count
   source = "./modules/kubernetes-node"
 
-  name               = "${var.name}-master-${count.index}"
+  name               = "${var.name}-control-plane-${count.index}"
   hcloud_ssh_key     = var.hcloud_ssh_key
-  server_type        = var.master_server_type
+  server_type        = var.control_plane_server_type
   image              = var.image
   location           = var.location
   kubernetes_version = var.kubernetes_version
 
-  labels       = merge(var.labels, { cluster = var.name, role = "master" })
+  labels       = merge(var.labels, { cluster = var.name, role = "control-plane" })
   firewall_ids = var.firewall_ids
 
   ssh_private_key_path = var.ssh_private_key_path
@@ -41,7 +41,7 @@ resource "random_id" "certificate_key" {
 
 resource "null_resource" "cluster_bootstrap" {
   connection {
-    host        = module.master[0].ipv4_address
+    host        = module.control_plane[0].ipv4_address
     type        = "ssh"
     timeout     = "5m"
     user        = "root"
@@ -77,19 +77,19 @@ resource "null_resource" "cluster_bootstrap" {
   }
 }
 
-resource "null_resource" "master_join" {
-  count = var.master_count
+resource "null_resource" "control_plane_join" {
+  count = var.control_plane_count
 
   depends_on = [
     null_resource.cluster_bootstrap
   ]
 
   triggers = {
-    instance_id = module.master[count.index].id
+    instance_id = module.control_plane[count.index].id
   }
 
   connection {
-    host        = module.master[count.index].ipv4_address
+    host        = module.control_plane[count.index].ipv4_address
     type        = "ssh"
     timeout     = "5m"
     user        = "root"
@@ -114,7 +114,7 @@ resource "null_resource" "master_join" {
         --control-plane \
         --certificate-key ${random_id.certificate_key.hex}' | \
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${module.master[count.index].ipv4_address} 'tee /root/join-command.sh >/dev/null'
+        root@${module.control_plane[count.index].ipv4_address} 'tee /root/join-command.sh >/dev/null'
     EOT
   }
 

@@ -1,4 +1,4 @@
-# A simple dual-stack cluster with a single master node
+# A simple dual-stack cluster with a single control plane node
 
 terraform {
   required_providers {
@@ -23,12 +23,12 @@ resource "hcloud_ssh_key" "key" {
 module "k8s" {
   source = "tibordp/dualstack-k8s/hcloud"
 
-  name               = "k8s"
-  hcloud_ssh_key     = hcloud_ssh_key.key.id
-  hcloud_token       = vars.hetzner_token
-  location           = "hel1"
-  master_server_type = "cx31"
-  worker_server_type = "cx31"
+  name                      = "k8s"
+  hcloud_ssh_key            = hcloud_ssh_key.key.id
+  hcloud_token              = vars.hetzner_token
+  location                  = "hel1"
+  control_plane_server_type = "cx31"
+  worker_server_type        = "cx31"
 }
 
 // After control plane is set up, additional workers can be joined

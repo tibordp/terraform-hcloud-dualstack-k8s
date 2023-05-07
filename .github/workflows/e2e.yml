@@ -2,9 +2,9 @@ name: 'E2E test Terraform on Hetzner'
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]    
+    branches: [ main ]
 
 jobs:
   e2e-test:
@@ -23,16 +23,16 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v1    
+      uses: hashicorp/setup-terraform@v1
       with:
-        terraform_wrapper: false      
+        terraform_wrapper: false
 
     - name: Generate SSH keypair
       run: ssh-keygen -b 2048 -t rsa -f  ~/.ssh/id_rsa -q -N ""
 
     - name: Install kubectl
       run: ./test.sh kubectl
-      working-directory: test      
+      working-directory: test
 
     - name: Terraform Init
       run: terraform init
@@ -43,6 +43,6 @@ jobs:
       working-directory: test
 
     - name: Teardown clusters
-      if: ${{ always() }}      
+      if: ${{ always() }}
       run: ./test.sh teardown
       working-directory: test

@@ -1,12 +1,12 @@
-# NOTE: this release was tested against kubernetes v1.18.x
-
 ---
+# Source: hcloud-cloud-controller-manager/templates/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: cloud-controller-manager
   namespace: kube-system
 ---
+# Source: hcloud-cloud-controller-manager/templates/clusterrolebinding.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -20,6 +20,7 @@ subjects:
     name: cloud-controller-manager
     namespace: kube-system
 ---
+# Source: hcloud-cloud-controller-manager/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,44 +36,38 @@ spec:
     metadata:
       labels:
         app: hcloud-cloud-controller-manager
-      annotations:
-        scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
       serviceAccountName: cloud-controller-manager
       dnsPolicy: Default
       tolerations:
-        # this taint is set by all kubelets running `--cloud-provider=external`
-        # so we should tolerate it to schedule the cloud controller manager
+        # Allow HCCM itself to schedule on nodes that have not yet been initialized by HCCM.
         - key: "node.cloudprovider.kubernetes.io/uninitialized"
           value: "true"
           effect: "NoSchedule"
         - key: "CriticalAddonsOnly"
           operator: "Exists"
-        # cloud controller manages should be able to run on masters
-        - key: "node-role.kubernetes.io/master"
-          effect: NoSchedule
-          operator: Exists
+
+        # Allow HCCM to schedule on control plane nodes.
         - key: "node-role.kubernetes.io/control-plane"
           effect: NoSchedule
           operator: Exists
+
         - key: "node.kubernetes.io/not-ready"
-          effect: "NoSchedule"
+          effect: "NoExecute"
+      hostNetwork: true
       containers:
-        - image: hetznercloud/hcloud-cloud-controller-manager:v1.13.0
-          name: hcloud-cloud-controller-manager
+        - name: hcloud-cloud-controller-manager
+          image: hetznercloud/hcloud-cloud-controller-manager:v1.15.0
           command:
             - "/bin/hcloud-cloud-controller-manager"
+            - "--allow-untagged-cloud"
             - "--cloud-provider=hcloud"
             - "--leader-elect=false"
-            - "--allow-untagged-cloud"
+            - "--route-reconciliation-period=30s"
 %{ if use_hcloud_network ~}
             - "--allocate-node-cidrs=true"
             - "--cluster-cidr=${pod_cidr_ipv4}"
 %{ endif ~}
-          resources:
-            requests:
-              cpu: 100m
-              memory: 50Mi
           env:
             - name: NODE_NAME
               valueFrom:
@@ -92,4 +87,11 @@ spec:
 %{ endif ~}
             - name: HCLOUD_INSTANCES_ADDRESS_FAMILY
               value: dualstack
+          ports:
+            - name: metrics
+              containerPort: 8233
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
       priorityClassName: system-cluster-critical
