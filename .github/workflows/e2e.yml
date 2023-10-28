@@ -11,6 +11,9 @@ jobs:
     name: 'Terraform'
     runs-on: ubuntu-latest
 
+    concurrency:
+      group: e2e-test # Ensure only one e2e test runs at a time
+
     defaults:
       run:
         shell: bash
