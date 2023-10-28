@@ -9,7 +9,8 @@ terraform {
 
 locals {
   provision_script = templatefile("${path.module}/scripts/prepare-node.sh.tpl", {
-    kubernetes_version = var.kubernetes_version
+    kubernetes_version       = var.kubernetes_version
+    kubernetes_minor_version = replace(var.kubernetes_version, "/^(\\d+\\.\\d+).*$/", "$1")
   })
 }
 

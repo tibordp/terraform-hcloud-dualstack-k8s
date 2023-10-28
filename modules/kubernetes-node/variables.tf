@@ -21,6 +21,11 @@ variable "image" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
+
+  validation {
+    condition     = can(regex("^1\\.([0-9]+)\\.([0-9]+)$", var.kubernetes_version))
+    error_message = "The kubernetes_version value must be a \"1.x.y\"."
+  }
 }
 
 variable "location" {
