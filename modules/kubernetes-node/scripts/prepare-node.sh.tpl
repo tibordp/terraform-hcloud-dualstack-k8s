@@ -22,10 +22,10 @@ install_prerequisites() {
 		apt-get -qq upgrade
 		apt-get -qq install apt-transport-https ca-certificates curl gnupg lsb-release ipvsadm wireguard apparmor
 		curl -fsSL https://download.docker.com/linux/$os_id/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-		curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/kubernetes-archive-keyring.gpg
+		curl -fsSL https://pkgs.k8s.io/core:/stable:/v${kubernetes_minor_version}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 		echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$os_id $(lsb_release -cs) stable" \
 			>/etc/apt/sources.list.d/docker.list
-		echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" \
+		echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kubernetes_minor_version}/deb/ /" \
 			>/etc/apt/sources.list.d/kubernetes.list
 
 		# Install container runtime
@@ -38,12 +38,11 @@ install_prerequisites() {
 		cat <<-EOF > /etc/yum.repos.d/kubernetes.repo
 			[kubernetes]
 			name=Kubernetes
-			baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+			baseurl=https://pkgs.k8s.io/core:/stable:/v${kubernetes_minor_version}/rpm/
 			enabled=1
 			gpgcheck=1
-			repo_gpgcheck=1
-			gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-			exclude=kubelet kubeadm kubectl
+			gpgkey=https://pkgs.k8s.io/core:/stable:/v${kubernetes_minor_version}/rpm/repodata/repomd.xml.key
+			exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 			EOF
 
 		if [ "$os_id" == "fedora" ]; then
@@ -109,9 +108,10 @@ configure_containerd() {
 
 install_kubernetes() {
 	if [ $is_debian_like == 1 ]; then
-		apt-get -qq install kubelet=${kubernetes_version}-00 kubeadm=${kubernetes_version}-00 kubectl=${kubernetes_version}-00
+		apt-get -qq install kubelet=${kubernetes_version}-* kubeadm=${kubernetes_version}-* kubectl=${kubernetes_version}-*
 		apt-mark hold kubelet kubeadm kubectl
 
+		mkdir -p /etc/systemd/system/kubelet.service.d
 		cat <<-EOF > /etc/systemd/system/kubelet.service.d/20-hcloud.conf
 			[Service]
 			Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external --node-ip=::"
@@ -128,7 +128,7 @@ install_kubernetes() {
 		fi
 
 		echo 'KUBELET_EXTRA_ARGS=--cloud-provider=external --node-ip=::' > /etc/sysconfig/kubelet
-		dnf -qy install kubelet-${kubernetes_version}-0 kubeadm-${kubernetes_version}-0 kubectl-${kubernetes_version}-0 --disableexcludes=kubernetes
+		dnf -qy install kubelet-${kubernetes_version}-* kubeadm-${kubernetes_version}-* kubectl-${kubernetes_version}-* --disableexcludes=kubernetes
 		systemctl enable --now containerd kubelet
 	fi
 }

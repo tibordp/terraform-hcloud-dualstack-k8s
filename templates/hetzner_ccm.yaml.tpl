@@ -3,21 +3,21 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: cloud-controller-manager
+  name: hcloud-cloud-controller-manager
   namespace: kube-system
 ---
 # Source: hcloud-cloud-controller-manager/templates/clusterrolebinding.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: system:cloud-controller-manager
+  name: "system:hcloud-cloud-controller-manager"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-admin
 subjects:
   - kind: ServiceAccount
-    name: cloud-controller-manager
+    name: hcloud-cloud-controller-manager
     namespace: kube-system
 ---
 # Source: hcloud-cloud-controller-manager/templates/deployment.yaml
@@ -37,7 +37,7 @@ spec:
       labels:
         app: hcloud-cloud-controller-manager
     spec:
-      serviceAccountName: cloud-controller-manager
+      serviceAccountName: hcloud-cloud-controller-manager
       dnsPolicy: Default
       tolerations:
         # Allow HCCM itself to schedule on nodes that have not yet been initialized by HCCM.
@@ -48,6 +48,9 @@ spec:
           operator: "Exists"
 
         # Allow HCCM to schedule on control plane nodes.
+        - key: "node-role.kubernetes.io/master"
+          effect: NoSchedule
+          operator: Exists
         - key: "node-role.kubernetes.io/control-plane"
           effect: NoSchedule
           operator: Exists
@@ -57,13 +60,13 @@ spec:
       hostNetwork: true
       containers:
         - name: hcloud-cloud-controller-manager
-          image: hetznercloud/hcloud-cloud-controller-manager:v1.15.0
           command:
             - "/bin/hcloud-cloud-controller-manager"
             - "--allow-untagged-cloud"
             - "--cloud-provider=hcloud"
-            - "--leader-elect=false"
             - "--route-reconciliation-period=30s"
+            - "--webhook-secure-port=0"
+            - "--leader-elect=false"
 %{ if use_hcloud_network ~}
             - "--allocate-node-cidrs=true"
             - "--cluster-cidr=${pod_cidr_ipv4}"
@@ -87,6 +90,7 @@ spec:
 %{ endif ~}
             - name: HCLOUD_INSTANCES_ADDRESS_FAMILY
               value: dualstack
+          image: hetznercloud/hcloud-cloud-controller-manager:v1.18.0 # x-release-please-version
           ports:
             - name: metrics
               containerPort: 8233

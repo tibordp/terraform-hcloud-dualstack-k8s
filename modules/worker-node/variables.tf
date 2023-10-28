@@ -49,9 +49,14 @@ variable "labels" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.27.1)"
+  description = "Kubernetes version"
   type        = string
-  default     = "1.27.1"
+  default     = "1.28.3"
+
+  validation {
+    condition     = can(regex("^1\\.([0-9]+)\\.([0-9]+)$", var.kubernetes_version))
+    error_message = "The kubernetes_version value must be a \"1.x.y\"."
+  }
 }
 
 variable "use_hcloud_network" {

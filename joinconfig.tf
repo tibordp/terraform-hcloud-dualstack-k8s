@@ -3,6 +3,7 @@ locals {
   bootstrap_token_ttl = 10 * 365 * 24
   provision_script = templatefile("${path.module}/modules/kubernetes-node/scripts/prepare-node.sh.tpl", {
     kubernetes_version = var.kubernetes_version
+    kubernetes_minor_version = replace(var.kubernetes_version, "/^(\\d+\\.\\d+).*$/", "$1")
   })
 }
 
