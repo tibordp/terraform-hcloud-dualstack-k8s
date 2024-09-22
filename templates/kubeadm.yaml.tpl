@@ -3,14 +3,14 @@ apiVersion: kubelet.config.k8s.io/v1beta1
 cgroupDriver: systemd
 ---
 kind: InitConfiguration
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 certificateKey: "${certificate_key}"
 localAPIEndpoint:
   advertiseAddress: "${advertise_address}"
   bindPort: 6443
 ---
 kind: ClusterConfiguration
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kubernetesVersion: "v${kubernetes_version}"
 apiServer:
   certSANs:
