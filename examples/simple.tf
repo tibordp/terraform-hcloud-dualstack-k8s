@@ -27,7 +27,7 @@ module "cluster" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   hcloud_token   = vars.hetzner_token
   location       = "hel1"
-  server_type    = "cx31"
+  server_type    = "cpx31"
 }
 
 module "workers" {
@@ -40,7 +40,7 @@ module "workers" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   location       = "hel1"
 
-  server_type = "cx31"
+  server_type = "cpx31"
 }
 
 output "simple_kubeconfig" {

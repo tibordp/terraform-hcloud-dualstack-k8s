@@ -13,15 +13,15 @@ variable "hcloud_ssh_key" {
 }
 
 variable "server_type" {
-  description = "Server SKU (default: 'cx31')"
+  description = "Server SKU (default: 'cpx31')"
   type        = string
-  default     = "cx31"
+  default     = "cpx31"
 }
 
 variable "image" {
-  description = "Image for the nodes (default: ubuntu-22.04)"
+  description = "Image for the nodes (default: ubuntu-24.04)"
   type        = string
-  default     = "ubuntu-22.04"
+  default     = "ubuntu-24.04"
 }
 
 variable "location" {
@@ -51,7 +51,7 @@ variable "labels" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.29.2"
+  default     = "1.31.1"
 
   validation {
     condition     = can(regex("^1\\.([0-9]+)\\.([0-9]+)$", var.kubernetes_version))

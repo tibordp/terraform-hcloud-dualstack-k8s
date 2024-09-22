@@ -111,11 +111,7 @@ install_kubernetes() {
 		apt-get -qq install kubelet=${kubernetes_version}-* kubeadm=${kubernetes_version}-* kubectl=${kubernetes_version}-*
 		apt-mark hold kubelet kubeadm kubectl
 
-		mkdir -p /etc/systemd/system/kubelet.service.d
-		cat <<-EOF > /etc/systemd/system/kubelet.service.d/20-hcloud.conf
-			[Service]
-			Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external --node-ip=::"
-			EOF
+		echo 'KUBELET_EXTRA_ARGS=--cloud-provider=external --node-ip=::' > /etc/default/kubelet
 
 		systemctl daemon-reload
 		systemctl restart containerd kubelet
