@@ -27,7 +27,7 @@ module "cluster" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   hcloud_token   = vars.hetzner_token
   location       = "hel1"
-  server_type    = "cx31"
+  server_type    = "cpx31"
 }
 
 // After control plane is set up, additional workers can be joined
@@ -37,7 +37,7 @@ resource "hcloud_server" "instance" {
   ssh_keys    = [hcloud_ssh_key.key.id]
   image       = "ubuntu-20.04"
   location    = "hel1"
-  server_type = "cx31"
+  server_type = "cpx31"
 
   user_data = module.cluster.join_user_data
 }

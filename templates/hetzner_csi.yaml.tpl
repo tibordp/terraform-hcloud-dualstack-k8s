@@ -186,7 +186,7 @@ spec:
       initContainers:
       containers:
         - name: csi-node-driver-registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.7.0
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.11.1
           imagePullPolicy: IfNotPresent
           args:
             - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.hetzner.cloud/socket
@@ -199,7 +199,7 @@ spec:
             limits: {}
             requests: {}
         - name: liveness-probe
-          image: registry.k8s.io/sig-storage/livenessprobe:v2.9.0
+          image: registry.k8s.io/sig-storage/livenessprobe:v2.13.1
           imagePullPolicy: IfNotPresent
           volumeMounts:
           - mountPath: /run/csi
@@ -208,7 +208,7 @@ spec:
             limits: {}
             requests: {}
         - name: hcloud-csi-driver
-          image: docker.io/hetznercloud/hcloud-csi-driver:v2.6.0 # x-release-please-version
+          image: docker.io/hetznercloud/hcloud-csi-driver:v2.9.0 # x-release-please-version
           imagePullPolicy: IfNotPresent
           command: [/bin/hcloud-csi-driver-node]
           volumeMounts:
@@ -297,7 +297,7 @@ spec:
       initContainers:
       containers:
         - name: csi-attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.1.0
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
           imagePullPolicy: IfNotPresent
           resources:
             limits: {}
@@ -309,7 +309,7 @@ spec:
             mountPath: /run/csi
 
         - name: csi-resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.7.0
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.11.2
           imagePullPolicy: IfNotPresent
           resources:
             limits: {}
@@ -319,7 +319,7 @@ spec:
             mountPath: /run/csi
 
         - name: csi-provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v3.4.0
+          image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.2
           imagePullPolicy: IfNotPresent
           resources:
             limits: {}
@@ -332,7 +332,7 @@ spec:
             mountPath: /run/csi
 
         - name: liveness-probe
-          image: registry.k8s.io/sig-storage/livenessprobe:v2.9.0
+          image: registry.k8s.io/sig-storage/livenessprobe:v2.13.1
           imagePullPolicy: IfNotPresent
           resources:
             limits: {}
@@ -342,7 +342,7 @@ spec:
             name: socket-dir
 
         - name: hcloud-csi-driver
-          image: docker.io/hetznercloud/hcloud-csi-driver:v2.6.0 # x-release-please-version
+          image: docker.io/hetznercloud/hcloud-csi-driver:v2.9.0 # x-release-please-version
           imagePullPolicy: IfNotPresent
           command: [/bin/hcloud-csi-driver-controller]
           env:

@@ -26,7 +26,7 @@ module "simple_cluster" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   hcloud_token   = var.hetzner_token
   location       = "hel1"
-  server_type    = "cx21"
+  server_type    = "cpx21"
 }
 
 module "simple_worker_node" {
@@ -38,7 +38,7 @@ module "simple_worker_node" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   location       = "hel1"
 
-  server_type = "cx21"
+  server_type = "cpx21"
 }
 
 module "ha_cluster" {
@@ -48,7 +48,7 @@ module "ha_cluster" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   hcloud_token   = var.hetzner_token
   location       = "hel1"
-  server_type    = "cx21"
+  server_type    = "cpx21"
 
   load_balancer_type = "lb11"
 
@@ -64,7 +64,7 @@ module "ha_worker_node" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   location       = "hel1"
 
-  server_type = "cx21"
+  server_type = "cpx21"
 }
 
 

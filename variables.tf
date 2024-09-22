@@ -9,9 +9,9 @@ variable "hcloud_ssh_key" {
 }
 
 variable "server_type" {
-  description = "Server SKU for control plane nodes (default: 'cx31')"
+  description = "Server SKU for control plane nodes (default: 'cpx31')"
   type        = string
-  default     = "cx31"
+  default     = "cpx31"
 }
 
 variable "hcloud_token" {
@@ -57,9 +57,9 @@ variable "service_cidr_ipv4" {
 }
 
 variable "image" {
-  description = "Image for the nodes (default: ubuntu-22.04)"
+  description = "Image for the nodes (default: ubuntu-24.04)"
   type        = string
-  default     = "ubuntu-22.04"
+  default     = "ubuntu-24.04"
 }
 
 variable "location" {
@@ -116,9 +116,9 @@ variable "primary_ip_family" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.29.2)"
+  description = "Version of Kubernetes to install (default: 1.31.1)"
   type        = string
-  default     = "1.29.2"
+  default     = "1.31.1"
 
   validation {
     condition     = can(regex("^1\\.([0-9]+)\\.([0-9]+)$", var.kubernetes_version))
