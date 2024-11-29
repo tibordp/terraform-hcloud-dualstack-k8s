@@ -54,14 +54,12 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           effect: NoSchedule
           operator: Exists
-
         - key: "node.kubernetes.io/not-ready"
           effect: "NoExecute"
-      hostNetwork: true
+
       containers:
         - name: hcloud-cloud-controller-manager
-          command:
-            - "/bin/hcloud-cloud-controller-manager"
+          args:
             - "--allow-untagged-cloud"
             - "--cloud-provider=hcloud"
             - "--route-reconciliation-period=30s"
@@ -90,7 +88,7 @@ spec:
 %{ endif ~}
             - name: HCLOUD_INSTANCES_ADDRESS_FAMILY
               value: dualstack
-          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.20.0 # x-release-please-version
+          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.21.0 # x-releaser-pleaser-version
           ports:
             - name: metrics
               containerPort: 8233

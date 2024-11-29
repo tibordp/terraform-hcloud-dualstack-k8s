@@ -149,7 +149,7 @@ metadata:
     app.kubernetes.io/name: hcloud-csi
     app.kubernetes.io/instance: hcloud-csi
     app.kubernetes.io/component: node
-    app: hcloud-csi
+    app: hcloud-csi 
 spec:
   updateStrategy:
     type: RollingUpdate
@@ -164,7 +164,7 @@ spec:
         app.kubernetes.io/component: node
         app: hcloud-csi
     spec:
-
+      
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -174,6 +174,10 @@ spec:
                 operator: NotIn
                 values:
                 - "true"
+              - key: instance.hetzner.cloud/provided-by
+                operator: NotIn
+                values:
+                - robot
       tolerations:
         - effect: NoExecute
           operator: Exists
@@ -186,7 +190,7 @@ spec:
       initContainers:
       containers:
         - name: csi-node-driver-registrar
-          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.11.1
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.12.0
           imagePullPolicy: IfNotPresent
           args:
             - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.hetzner.cloud/socket
@@ -199,7 +203,7 @@ spec:
             limits: {}
             requests: {}
         - name: liveness-probe
-          image: registry.k8s.io/sig-storage/livenessprobe:v2.13.1
+          image: registry.k8s.io/sig-storage/livenessprobe:v2.14.0
           imagePullPolicy: IfNotPresent
           volumeMounts:
           - mountPath: /run/csi
@@ -208,7 +212,7 @@ spec:
             limits: {}
             requests: {}
         - name: hcloud-csi-driver
-          image: docker.io/hetznercloud/hcloud-csi-driver:v2.9.0 # x-release-please-version
+          image: docker.io/hetznercloud/hcloud-csi-driver:v2.11.0 # x-releaser-pleaser-version
           imagePullPolicy: IfNotPresent
           command: [/bin/hcloud-csi-driver-node]
           volumeMounts:
@@ -274,7 +278,7 @@ metadata:
     app.kubernetes.io/name: hcloud-csi
     app.kubernetes.io/instance: hcloud-csi
     app.kubernetes.io/component: controller
-    app: hcloud-csi-controller
+    app: hcloud-csi-controller 
 spec:
   replicas: 1
   strategy:
@@ -291,13 +295,23 @@ spec:
         app: hcloud-csi-controller
     spec:
       serviceAccountName: hcloud-csi-controller
-
+      
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: instance.hetzner.cloud/provided-by
+                operator: In
+                values:
+                - cloud
+            weight: 1
       securityContext:
         fsGroup: 1001
       initContainers:
       containers:
         - name: csi-attacher
-          image: registry.k8s.io/sig-storage/csi-attacher:v4.6.1
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.7.0
           imagePullPolicy: IfNotPresent
           resources:
             limits: {}
@@ -309,7 +323,7 @@ spec:
             mountPath: /run/csi
 
         - name: csi-resizer
-          image: registry.k8s.io/sig-storage/csi-resizer:v1.11.2
+          image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
           imagePullPolicy: IfNotPresent
           resources:
             limits: {}
@@ -319,7 +333,7 @@ spec:
             mountPath: /run/csi
 
         - name: csi-provisioner
-          image: registry.k8s.io/sig-storage/csi-provisioner:v5.0.2
+          image: registry.k8s.io/sig-storage/csi-provisioner:v5.1.0
           imagePullPolicy: IfNotPresent
           resources:
             limits: {}
@@ -332,7 +346,7 @@ spec:
             mountPath: /run/csi
 
         - name: liveness-probe
-          image: registry.k8s.io/sig-storage/livenessprobe:v2.13.1
+          image: registry.k8s.io/sig-storage/livenessprobe:v2.14.0
           imagePullPolicy: IfNotPresent
           resources:
             limits: {}
@@ -342,7 +356,7 @@ spec:
             name: socket-dir
 
         - name: hcloud-csi-driver
-          image: docker.io/hetznercloud/hcloud-csi-driver:v2.9.0 # x-release-please-version
+          image: docker.io/hetznercloud/hcloud-csi-driver:v2.11.0 # x-releaser-pleaser-version
           imagePullPolicy: IfNotPresent
           command: [/bin/hcloud-csi-driver-controller]
           env:
@@ -397,5 +411,6 @@ spec:
   attachRequired: true
   fsGroupPolicy: File
   podInfoOnMount: true
+  seLinuxMount: true
   volumeLifecycleModes:
   - Persistent

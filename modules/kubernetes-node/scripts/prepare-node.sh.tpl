@@ -45,15 +45,23 @@ install_prerequisites() {
 			exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 			EOF
 
+		addrepo() {
+			if dnf --version | grep -q dnf5; then
+				dnf -qy config-manager addrepo "--from-repofile=$1"
+			else
+				dnf -qy config-manager --add-repo "$1"
+			fi
+		}
+
 		if [ "$os_id" == "fedora" ]; then
-			dnf -qy config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+			addrepo https://download.docker.com/linux/fedora/docker-ce.repo
 			dnf -qy install containerd.io ipvsadm wireguard-tools iproute-tc
 		elif [ "$(. /etc/os-release && echo $PLATFORM_ID)" = "platform:el9" ]; then
 			# Wireguard is installed by default on EL9-like systems
-			dnf -qy config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+			addrepo https://download.docker.com/linux/centos/docker-ce.repo
 			dnf -qy install containerd.io ipvsadm wireguard-tools iproute-tc
 		else
-			dnf -qy config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+			addrepo https://download.docker.com/linux/centos/docker-ce.repo
 			dnf -qy install elrepo-release epel-release
 			dnf -qy install containerd.io ipvsadm kmod-wireguard wireguard-tools iproute-tc
 		fi
@@ -124,7 +132,11 @@ install_kubernetes() {
 		fi
 
 		echo 'KUBELET_EXTRA_ARGS=--cloud-provider=external --node-ip=::' > /etc/sysconfig/kubelet
-		dnf -qy install kubelet-${kubernetes_version}-* kubeadm-${kubernetes_version}-* kubectl-${kubernetes_version}-* --disableexcludes=kubernetes
+		if dnf --version | grep -q dnf5; then
+			dnf -qy install kubelet-${kubernetes_version}-* kubeadm-${kubernetes_version}-* kubectl-${kubernetes_version}-* --setopt=disable_excludes=kubernetes
+		else
+			dnf -qy install kubelet-${kubernetes_version}-* kubeadm-${kubernetes_version}-* kubectl-${kubernetes_version}-* --disableexcludes=kubernetes
+		fi
 		systemctl enable --now containerd kubelet
 	fi
 }
