@@ -54,7 +54,7 @@ spec:
       serviceAccountName: wigglenet
       containers:
       - name: wigglenet
-        image: ghcr.io/tibordp/wigglenet:v0.4.2
+        image: ghcr.io/tibordp/wigglenet:v0.4.4
         imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME

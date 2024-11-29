@@ -116,9 +116,9 @@ variable "primary_ip_family" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.31.1)"
+  description = "Version of Kubernetes to install (default: 1.31.3)"
   type        = string
-  default     = "1.31.1"
+  default     = "1.31.3"
 
   validation {
     condition     = can(regex("^1\\.([0-9]+)\\.([0-9]+)$", var.kubernetes_version))
