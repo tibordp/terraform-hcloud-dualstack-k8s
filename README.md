@@ -69,9 +69,9 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME                  STATUS   ROLES           AGE   VERSION
-k8s-control-plane-0   Ready    control-plane   31m   v1.32.3
-k8s-worker-0          Ready    <none>          31m   v1.32.3
-k8s-worker-1          Ready    <none>          31m   v1.32.3
+k8s-control-plane-0   Ready    control-plane   31m   v1.33.0
+k8s-worker-0          Ready    <none>          31m   v1.33.0
+k8s-worker-1          Ready    <none>          31m   v1.33.0
 ```
 
 ## Supported base images
@@ -80,10 +80,7 @@ The module should work on most major RPM and DEB distros. It been tested on thes
 
 - Ubuntu 24.04 (`ubuntu-24.04`)
 - Debian 12 (`debian-12`)
-- Centos Stream 9 (`centos-stream-9`)
-- Rocky Linux 9 (`rocky-9`)
-- Fedora 40 (`fedora-40`)
-- Fedora 41 (`fedora-41`)
+- Fedora 41 (`fedora-42`)
 
 Others may work as well, but have not been tested.
 

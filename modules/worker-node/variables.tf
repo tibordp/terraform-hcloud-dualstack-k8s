@@ -51,7 +51,7 @@ variable "labels" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.32.3"
+  default     = "1.33.0"
 
   validation {
     condition     = can(regex("^1\\.([0-9]+)\\.([0-9]+)$", var.kubernetes_version))

@@ -88,7 +88,7 @@ spec:
 %{ endif ~}
             - name: HCLOUD_INSTANCES_ADDRESS_FAMILY
               value: dualstack
-          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.23.0 # x-releaser-pleaser-version
+          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.24.0 # x-releaser-pleaser-version
           ports:
             - name: metrics
               containerPort: 8233
