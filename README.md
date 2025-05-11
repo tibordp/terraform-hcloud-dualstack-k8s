@@ -80,7 +80,7 @@ The module should work on most major RPM and DEB distros. It been tested on thes
 
 - Ubuntu 24.04 (`ubuntu-24.04`)
 - Debian 12 (`debian-12`)
-- Fedora 41 (`fedora-42`)
+- Fedora 42 (`fedora-42`)
 
 Others may work as well, but have not been tested.
 
