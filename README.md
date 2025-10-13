@@ -69,9 +69,9 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME                  STATUS   ROLES           AGE   VERSION
-k8s-control-plane-0   Ready    control-plane   31m   v1.33.0
-k8s-worker-0          Ready    <none>          31m   v1.33.0
-k8s-worker-1          Ready    <none>          31m   v1.33.0
+k8s-control-plane-0   Ready    control-plane   31m   v1.34.1
+k8s-worker-0          Ready    <none>          31m   v1.34.1
+k8s-worker-1          Ready    <none>          31m   v1.34.1
 ```
 
 ## Supported base images
@@ -79,7 +79,7 @@ k8s-worker-1          Ready    <none>          31m   v1.33.0
 The module should work on most major RPM and DEB distros. It been tested on these base images:
 
 - Ubuntu 24.04 (`ubuntu-24.04`)
-- Debian 12 (`debian-12`)
+- Debian 13 (`debian-13`)
 - Fedora 42 (`fedora-42`)
 
 Others may work as well, but have not been tested.
@@ -192,7 +192,7 @@ See [example](./examples/private_network.tf) for more details.
 Read these notes carefully before using this module in production.
 
 - Control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication, but appropriate Hetzner Firewall rules can be added (make sure to allow UDP port 24601 for Wireguard node-to-node tunnels)
-- Wigglenet is an experimental network plugin that I wrote for my personal use and has definitely not been battle tested. `NetworkPolicy` is not supported.
+- Wigglenet is an experimental network plugin that I wrote for my personal use and has definitely not been battle tested. `NetworkPolicy` is supported as of v0.5.0.
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here for details and workarounds](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs).
 - Some restrictions on day-2 operations. The following are supported seamlessly, but other changes will likely require the manual steps:
    - Node replacement (see notes above for control plane nodes)

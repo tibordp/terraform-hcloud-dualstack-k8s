@@ -12,6 +12,23 @@ rules:
       - list
       - watch
       - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "networking.k8s.io"
+    resources:
+      - networkpolicies
+    verbs:
+      - get
+      - list
+      - watch
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -54,7 +71,7 @@ spec:
       serviceAccountName: wigglenet
       containers:
       - name: wigglenet
-        image: ghcr.io/tibordp/wigglenet:v0.4.4
+        image: ghcr.io/tibordp/wigglenet:v0.5.0
         imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME
@@ -93,6 +110,9 @@ spec:
           # for IPv4 traffic
         - name: NATIVE_ROUTING_IPV4
           value: "${native_routing_ipv4}"
+          # Enable NetworkPolicy enforcement
+        - name: ENABLE_NETWORK_POLICY
+          value: "1"
         volumeMounts:
         - name: cfg
           mountPath: /etc/wigglenet
