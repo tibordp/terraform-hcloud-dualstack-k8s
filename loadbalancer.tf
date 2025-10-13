@@ -15,6 +15,14 @@ resource "hcloud_load_balancer_service" "control_plane" {
   listen_port      = 6443
   destination_port = 6443
   protocol         = "tcp"
+
+  health_check {
+    protocol = "tcp"
+    port     = 6443
+    interval = 10
+    timeout  = 5
+    retries  = 3
+  }
 }
 
 resource "hcloud_load_balancer_target" "control_plane_target" {

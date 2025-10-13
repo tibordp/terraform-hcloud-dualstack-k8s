@@ -29,7 +29,7 @@ module "cluster" {
   location       = "hel1"
   server_type    = "cpx31"
 
-  # The default pod_cidr_ipv6 is 10.96.0.0/16. This can be customized,
+  # The default pod_cidr_ipv4 is 10.96.0.0/16. This can be customized,
   # but it should be within the range of the private network. Also, it should
   # not overlap with the subnet specified below, as that subnet is used for nodes.
   # pod_cidr_ipv4 = "10.96.0.0/16"

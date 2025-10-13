@@ -31,7 +31,7 @@ module "cluster" {
   server_type    = "cpx31"
   node_count     = 3
 
-  control_plane_endpoint = "k8s.example.com"
+  load_balancer_type = "lb11"
 }
 
 module "workers" {

@@ -5,7 +5,7 @@ locals {
 
   control_plane_endpoint = var.control_plane_endpoint != "" ? var.control_plane_endpoint : (local.use_load_balancer ? "[${hcloud_load_balancer.control_plane[0].ipv6}]" : "[${module.control_plane[0].ipv6_address}]")
 
-  adverise_addresses = var.primary_ip_family == "ipv6" ? module.control_plane.*.ipv6_address : module.control_plane.*.ipv4_address
+  advertise_addresses = var.primary_ip_family == "ipv6" ? module.control_plane.*.ipv6_address : module.control_plane.*.ipv4_address
 
   # If using IP as an apiserver endpoint, add also the IPv4 SAN to the TLS certificate
   apiserver_cert_sans = concat(var.control_plane_endpoint != "" ? [
@@ -59,7 +59,7 @@ resource "null_resource" "cluster_bootstrap" {
       apiserver_cert_sans    = local.apiserver_cert_sans
       certificate_key        = random_id.certificate_key.hex
       control_plane_endpoint = local.control_plane_endpoint
-      advertise_address      = local.adverise_addresses[0]
+      advertise_address      = local.advertise_addresses[0]
       pod_cidr_ipv4          = var.pod_cidr_ipv4
       service_cidr_ipv4      = var.service_cidr_ipv4
       service_cidr_ipv6      = var.service_cidr_ipv6
@@ -110,7 +110,7 @@ resource "null_resource" "control_plane_join" {
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         root@${local.kubeadm_host} \
         'echo $(kubeadm token create --print-join-command --ttl=60m) \
-        --apiserver-advertise-address ${local.adverise_addresses[count.index]} \
+        --apiserver-advertise-address ${local.advertise_addresses[count.index]} \
         --control-plane \
         --certificate-key ${random_id.certificate_key.hex}' | \
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \

@@ -15,6 +15,6 @@ else
   kubeadm init --config cluster.yaml --upload-certs
 fi
 
-mkdir -p $HOME/.kube
-cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-chown $(id -u):$(id -g) $HOME/.kube/config
+mkdir -p "$HOME/.kube"
+cp -f /etc/kubernetes/admin.conf "$HOME/.kube/config"
+chown "$(id -u):$(id -g)" "$HOME/.kube/config"

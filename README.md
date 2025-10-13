@@ -124,7 +124,7 @@ If the node is already defunct, there are two cases to consider:
 
   It is important to remove failed members from etcd even if quorum is still present as new control plane nodes will not be able to join until etcd cluster is healthy.
 
-- etcd cluster no longer has quorum, e.g. a single control plane node is gone out of a 2-node cluster. In this case the etcd cluster will need to be rebuilt from snapshot, following the steps for [disaster recovery](https://etcd.io/docs/v3.4/op-guide/recovery/). Data loss may have occured.
+- etcd cluster no longer has quorum, e.g. a single control plane node is gone out of a 2-node cluster. In this case the etcd cluster will need to be rebuilt from snapshot, following the steps for [disaster recovery](https://etcd.io/docs/v3.6/op-guide/recovery/). Data loss may have occured.
 
 
 You may also need to manually remove the Node object, as the Hetzner Cloud Controller that is responsible for deleting defunct nodes may have been running on this very node (should not be an issue if `kubectl drain` was done first)
@@ -192,7 +192,8 @@ See [example](./examples/private_network.tf) for more details.
 Read these notes carefully before using this module in production.
 
 - Control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication, but appropriate Hetzner Firewall rules can be added (make sure to allow UDP port 24601 for Wireguard node-to-node tunnels)
-- Wigglenet is an experimental network plugin that I wrote for my personal use and has definitely not been battle tested. `NetworkPolicy` is supported as of v0.5.0.
+- Wigglenet is a custom network plugin with a smaller community than mainstream alternatives like Cilium or Calico. It has been used successfully for several years,
+  though primarily in smaller-scale deployments. NetworkPolicy support was added in v0.5.0 and is relatively new, so don't use it as your only line of defense.
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here for details and workarounds](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs).
 - Some restrictions on day-2 operations. The following are supported seamlessly, but other changes will likely require the manual steps:
    - Node replacement (see notes above for control plane nodes)
