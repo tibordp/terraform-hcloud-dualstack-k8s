@@ -12,7 +12,7 @@ terraform {
 variable "hetzner_token" {}
 
 provider "hcloud" {
-  token = vars.hetzner_token
+  token = var.hetzner_token
 }
 
 resource "hcloud_ssh_key" "key" {
@@ -25,9 +25,9 @@ module "cluster" {
 
   name           = "k8s"
   hcloud_ssh_key = hcloud_ssh_key.key.id
-  hcloud_token   = vars.hetzner_token
+  hcloud_token   = var.hetzner_token
   location       = "hel1"
-  server_type    = "cpx31"
+  server_type    = "cpx32"
 }
 
 module "workers" {
@@ -40,7 +40,7 @@ module "workers" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   location       = "hel1"
 
-  server_type = "cpx31"
+  server_type = "cpx32"
 }
 
 output "simple_kubeconfig" {

@@ -20,7 +20,7 @@ install_prerequisites() {
     # Install prerequisites
     apt-get -qq update
     apt-get -qq -y upgrade
-    apt-get -qq -y install apt-transport-https ca-certificates curl gnupg lsb-release ipvsadm wireguard apparmor
+    apt-get -qq -y install apt-transport-https ca-certificates curl gnupg lsb-release ipvsadm nftables wireguard apparmor
     curl -fsSL "https://download.docker.com/linux/$os_id/gpg" | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${kubernetes_minor_version}/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$os_id $(lsb_release -cs) stable" \
@@ -55,15 +55,15 @@ EOF
 
     if [ "$os_id" == "fedora" ]; then
       addrepo https://download.docker.com/linux/fedora/docker-ce.repo
-      dnf -qy install containerd.io ipvsadm wireguard-tools iproute-tc
+      dnf -qy install containerd.io ipvsadm nftables wireguard-tools iproute-tc
     elif [ "$(. /etc/os-release && echo "$PLATFORM_ID")" = "platform:el9" ]; then
       # Wireguard is installed by default on EL9-like systems
       addrepo https://download.docker.com/linux/centos/docker-ce.repo
-      dnf -qy install containerd.io ipvsadm wireguard-tools iproute-tc
+      dnf -qy install containerd.io ipvsadm nftables wireguard-tools iproute-tc
     else
       addrepo https://download.docker.com/linux/centos/docker-ce.repo
       dnf -qy install elrepo-release epel-release
-      dnf -qy install containerd.io ipvsadm kmod-wireguard wireguard-tools iproute-tc
+      dnf -qy install containerd.io ipvsadm nftables kmod-wireguard wireguard-tools iproute-tc
     fi
   fi
 }

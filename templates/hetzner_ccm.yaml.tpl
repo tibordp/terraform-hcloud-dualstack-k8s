@@ -6,15 +6,82 @@ metadata:
   name: hcloud-cloud-controller-manager
   namespace: kube-system
 ---
+# Source: hcloud-cloud-controller-manager/templates/clusterrole.yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "system:hcloud-cloud-controller-manager"
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - "*"
+  - apiGroups:
+      - ""
+    resources:
+      - nodes/status
+    verbs:
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - services/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - serviceaccounts
+    verbs:
+      - create
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+---
 # Source: hcloud-cloud-controller-manager/templates/clusterrolebinding.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: "system:hcloud-cloud-controller-manager"
+  # The prefix ":restricted" originates from removing the cluster-admin role from HCCM.
+  # Renaming the ClusterRoleBinding makes the migration easier for users.
+  name: "system:hcloud-cloud-controller-manager:restricted"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: "system:hcloud-cloud-controller-manager"
 subjects:
   - kind: ServiceAccount
     name: hcloud-cloud-controller-manager
@@ -54,9 +121,9 @@ spec:
         - key: "node-role.kubernetes.io/control-plane"
           effect: NoSchedule
           operator: Exists
+
         - key: "node.kubernetes.io/not-ready"
           effect: "NoExecute"
-
       containers:
         - name: hcloud-cloud-controller-manager
           args:
@@ -89,7 +156,7 @@ spec:
 %{ endif ~}
             - name: HCLOUD_INSTANCES_ADDRESS_FAMILY
               value: dualstack
-          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.27.0 # x-releaser-pleaser-version
+          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.30.1 # x-releaser-pleaser-version
           ports:
             - name: metrics
               containerPort: 8233
@@ -97,4 +164,4 @@ spec:
             requests:
               cpu: 100m
               memory: 50Mi
-      priorityClassName: system-cluster-critical
+      priorityClassName: "system-cluster-critical"

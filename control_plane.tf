@@ -65,6 +65,7 @@ resource "null_resource" "cluster_bootstrap" {
       service_cidr_ipv6      = var.service_cidr_ipv6
       primary_ip_family      = var.primary_ip_family
       kubernetes_version     = var.kubernetes_version
+      kube_proxy_mode        = var.use_nftables ? "nftables" : "iptables"
     })
     destination = "/root/cluster.yaml"
   }

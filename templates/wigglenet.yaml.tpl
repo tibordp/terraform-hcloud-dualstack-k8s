@@ -71,7 +71,7 @@ spec:
       serviceAccountName: wigglenet
       containers:
       - name: wigglenet
-        image: ghcr.io/tibordp/wigglenet:v0.5.0
+        image: ghcr.io/tibordp/wigglenet:v0.6.1
         imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME
@@ -113,14 +113,19 @@ spec:
           # Enable NetworkPolicy enforcement
         - name: ENABLE_NETWORK_POLICY
           value: "1"
+          # Firewall backend ("nftables" or "iptables")
+        - name: FIREWALL_BACKEND
+          value: "${firewall_backend}"
         volumeMounts:
         - name: cfg
           mountPath: /etc/wigglenet
         - name: cni-cfg
           mountPath: /etc/cni/net.d
+%{ if firewall_backend == "iptables" ~}
         - name: xtables-lock
           mountPath: /run/xtables.lock
           readOnly: false
+%{ endif ~}
         - name: lib-modules
           mountPath: /lib/modules
           readOnly: true
@@ -142,10 +147,12 @@ spec:
       - name: cni-cfg
         hostPath:
           path: /etc/cni/net.d
+%{ if firewall_backend == "iptables" ~}
       - name: xtables-lock
         hostPath:
           path: /run/xtables.lock
           type: FileOrCreate
+%{ endif ~}
       - name: lib-modules
         hostPath:
           path: /lib/modules
