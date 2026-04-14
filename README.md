@@ -69,9 +69,9 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME                  STATUS   ROLES           AGE   VERSION
-k8s-control-plane-0   Ready    control-plane   31m   v1.34.1
-k8s-worker-0          Ready    <none>          31m   v1.34.1
-k8s-worker-1          Ready    <none>          31m   v1.34.1
+k8s-control-plane-0   Ready    control-plane   31m   v1.35.3
+k8s-worker-0          Ready    <none>          31m   v1.35.3
+k8s-worker-1          Ready    <none>          31m   v1.35.3
 ```
 
 ## Supported base images
@@ -80,7 +80,7 @@ The module should work on most major RPM and DEB distros. It been tested on thes
 
 - Ubuntu 24.04 (`ubuntu-24.04`)
 - Debian 13 (`debian-13`)
-- Fedora 42 (`fedora-42`)
+- Fedora 43 (`fedora-43`)
 
 Others may work as well, but have not been tested.
 
@@ -192,15 +192,13 @@ See [example](./examples/private_network.tf) for more details.
 Read these notes carefully before using this module in production.
 
 - Control plane services that use host networking, such as etcd, kubelet and api-server bind on a public IP. This is not a problem per se since these components all use mTLS for communication, but appropriate Hetzner Firewall rules can be added (make sure to allow UDP port 24601 for Wireguard node-to-node tunnels)
-- Wigglenet is a custom network plugin with a smaller community than mainstream alternatives like Cilium or Calico. It has been used successfully for several years,
-  though primarily in smaller-scale deployments. NetworkPolicy support was added in v0.5.0 and is relatively new, so don't use it as your only line of defense.
+- Wigglenet is a custom network plugin with a smaller community than mainstream alternatives like Cilium or Calico. It has been used successfully for several years, though primarily in smaller-scale deployments.
 - kubelet serving certificates are self-signed. This can be an issue for metrics-server. See [here for details and workarounds](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs).
 - Some restrictions on day-2 operations. The following are supported seamlessly, but other changes will likely require the manual steps:
    - Node replacement (see notes above for control plane nodes)
    - Vertical scaling of node (changing the server type)
    - Horizontal scaling (changing node count).
    - Changing cluster addons settings (Wigglenet firewall settings, Hetzner API token for the Hetzner CCM and CSI).
-- As kube-proxy is configured to use IPVS mode, `load-balancer.hetzner.cloud/hostname: <hostname>` must be set on all `LoadBalancer` services, otherwise healthchecks will fail and the service will not be accessible from outsie the cluster (see [this issue](https://github.com/kubernetes/kubernetes/issues/79783) for more details)
 
 In addition some caveats for dual-stack clusters in general:
 

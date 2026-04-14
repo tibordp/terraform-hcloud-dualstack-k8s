@@ -28,5 +28,5 @@ controlPlaneEndpoint: "${control_plane_endpoint}:6443"
 ---
 kind: KubeProxyConfiguration
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
-mode: ipvs
+mode: ${kube_proxy_mode}
 bindAddress: "::"

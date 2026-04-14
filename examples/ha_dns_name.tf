@@ -37,7 +37,7 @@ module "cluster" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   hcloud_token   = var.hetzner_token
   location       = "nbg1"
-  server_type    = "cpx31"
+  server_type    = "cpx32"
   node_count     = 3
 
   control_plane_endpoint = "k8s.example.com"
@@ -53,7 +53,7 @@ module "workers" {
   hcloud_ssh_key = hcloud_ssh_key.key.id
   location       = "nbg1"
 
-  server_type = "cpx31"
+  server_type = "cpx32"
 }
 
 resource "aws_route53_record" "api_server_aaaa" {

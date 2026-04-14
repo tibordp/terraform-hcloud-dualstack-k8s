@@ -7,6 +7,7 @@ resource "null_resource" "install_addons" {
     wigglenet_manifest = templatefile("${path.module}/templates/wigglenet.yaml.tpl", {
       filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
       native_routing_ipv4     = var.use_hcloud_network
+      firewall_backend        = var.use_nftables ? "nftables" : "iptables"
     })
     ccm_manifest = templatefile("${path.module}/templates/hetzner_ccm.yaml.tpl", {
       use_hcloud_network = var.use_hcloud_network

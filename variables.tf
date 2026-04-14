@@ -9,9 +9,9 @@ variable "hcloud_ssh_key" {
 }
 
 variable "server_type" {
-  description = "Server SKU for control plane nodes (default: 'cpx31')"
+  description = "Server SKU for control plane nodes (default: 'cpx32')"
   type        = string
-  default     = "cpx31"
+  default     = "cpx32"
 }
 
 variable "hcloud_token" {
@@ -104,6 +104,12 @@ variable "filter_pod_ingress_ipv6" {
   default     = true
 }
 
+variable "use_nftables" {
+  description = "Use the nftables backend for kube-proxy and wigglenet (default: true)"
+  type        = bool
+  default     = true
+}
+
 variable "primary_ip_family" {
   description = "(Optional) Primary IP family for Service resources in cluster (default: ipv6)"
   type        = string
@@ -116,9 +122,9 @@ variable "primary_ip_family" {
 }
 
 variable "kubernetes_version" {
-  description = "Version of Kubernetes to install (default: 1.34.1)"
+  description = "Version of Kubernetes to install (default: 1.35.3)"
   type        = string
-  default     = "1.34.1"
+  default     = "1.35.3"
 
   validation {
     condition     = can(regex("^1\\.([0-9]+)\\.([0-9]+)$", var.kubernetes_version))

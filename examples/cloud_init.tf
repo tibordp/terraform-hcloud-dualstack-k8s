@@ -12,7 +12,7 @@ terraform {
 variable "hetzner_token" {}
 
 provider "hcloud" {
-  token = vars.hetzner_token
+  token = var.hetzner_token
 }
 
 resource "hcloud_ssh_key" "key" {
@@ -25,9 +25,9 @@ module "cluster" {
 
   name           = "k8s"
   hcloud_ssh_key = hcloud_ssh_key.key.id
-  hcloud_token   = vars.hetzner_token
+  hcloud_token   = var.hetzner_token
   location       = "hel1"
-  server_type    = "cpx31"
+  server_type    = "cpx32"
 }
 
 // After control plane is set up, additional workers can be joined
@@ -37,7 +37,7 @@ resource "hcloud_server" "instance" {
   ssh_keys    = [hcloud_ssh_key.key.id]
   image       = "ubuntu-20.04"
   location    = "hel1"
-  server_type = "cpx31"
+  server_type = "cpx32"
 
   user_data = module.cluster.join_user_data
 }
