@@ -1,54 +1,63 @@
-resource "null_resource" "install_addons" {
-  depends_on = [
-    null_resource.cluster_bootstrap
-  ]
+locals {
+  # hcloud secret consumed by the CCM and CSI driver, rendered as a manifest so it
+  # can be applied alongside the others in a single stream.
+  hcloud_secret = yamlencode({
+    apiVersion = "v1"
+    kind       = "Secret"
+    metadata = {
+      name      = "hcloud"
+      namespace = "kube-system"
+    }
+    type = "Opaque"
+    data = merge(
+      { token = base64encode(var.hcloud_token) },
+      var.hcloud_network_id != "" ? { network = base64encode(var.hcloud_network_id) } : {},
+    )
+  })
 
-  triggers = {
-    wigglenet_manifest = templatefile("${path.module}/templates/wigglenet.yaml.tpl", {
+  addon_manifests = join("\n---\n", [
+    local.hcloud_secret,
+    templatefile("${path.module}/templates/wigglenet.yaml.tpl", {
       filter_pod_ingress_ipv6 = var.filter_pod_ingress_ipv6
       native_routing_ipv4     = var.use_hcloud_network
       firewall_backend        = var.use_nftables ? "nftables" : "iptables"
-    })
-    ccm_manifest = templatefile("${path.module}/templates/hetzner_ccm.yaml.tpl", {
+    }),
+    templatefile("${path.module}/templates/hetzner_ccm.yaml.tpl", {
       use_hcloud_network = var.use_hcloud_network
       pod_cidr_ipv4      = var.pod_cidr_ipv4
-    })
-    csi_manifest = templatefile("${path.module}/templates/hetzner_csi.yaml.tpl", {})
-    hcloud_token = var.hcloud_token
+    }),
+    templatefile("${path.module}/templates/hetzner_csi.yaml.tpl", {}),
+  ])
+}
+
+# Apply the cluster addons (CNI, CCM, CSI, hcloud secret) by piping the manifests
+# straight to kubectl on the seed, over the SSH connection we already use.
+#
+# We deliberately do not use a Kubernetes/kubectl Terraform provider: its provider
+# block would have to be configured from values not known until apply (the endpoint
+# and certs), which breaks single-apply cluster creation, and the API server is
+# IPv6-primary -- the machine running Terraform may not be able to reach it, while
+# the seed always can.
+resource "null_resource" "install_addons" {
+  depends_on = [
+    null_resource.control_plane_init
+  ]
+
+  triggers = {
+    manifests = local.addon_manifests
   }
 
   connection {
-    host        = local.kubeadm_host
+    host        = module.control_plane[0].ipv4_address
     type        = "ssh"
     timeout     = "5m"
     user        = "root"
     private_key = file(var.ssh_private_key_path)
   }
 
-  provisioner "file" {
-    content     = self.triggers.wigglenet_manifest
-    destination = "/root/wigglenet.yaml"
-  }
-
-  provisioner "file" {
-    content     = self.triggers.ccm_manifest
-    destination = "/root/hetzner_ccm.yaml"
-  }
-
-  provisioner "file" {
-    content     = self.triggers.csi_manifest
-    destination = "/root/hetzner_csi.yaml"
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/scripts/install-addons.sh"
-    destination = "/root/install-addons.sh"
-  }
-
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /root/install-addons.sh",
-      "HCLOUD_TOKEN='${var.hcloud_token}' HCLOUD_NETWORK='${var.hcloud_network_id}' /root/install-addons.sh",
+      "kubectl --kubeconfig /etc/kubernetes/admin.conf apply -f - <<'ADDONS_EOF'\n${local.addon_manifests}\nADDONS_EOF",
     ]
   }
 }

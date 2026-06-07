@@ -44,9 +44,20 @@ resource "null_resource" "node_join" {
     private_key = file(var.ssh_private_key_path)
   }
 
+  provisioner "file" {
+    content     = var.cluster.discovery_conf
+    destination = "/root/discovery.conf"
+  }
+
+  provisioner "file" {
+    content     = var.cluster.worker_join_config
+    destination = "/root/kubeadm.yaml"
+  }
+
   provisioner "remote-exec" {
     inline = [
-      var.cluster.join_command
+      "set -eu",
+      "test -f /etc/kubernetes/.terraform-provisioned || { kubeadm join --config /root/kubeadm.yaml && touch /etc/kubernetes/.terraform-provisioned; }",
     ]
   }
 }

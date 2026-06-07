@@ -86,12 +86,6 @@ variable "labels" {
   default     = {}
 }
 
-variable "kubeadm_host" {
-  description = "(Optional) The control plane node to use for management operations"
-  type        = string
-  default     = ""
-}
-
 variable "apiserver_extra_sans" {
   description = "(Optional) Extra SANs for the apiserver certificate"
   type        = list(any)

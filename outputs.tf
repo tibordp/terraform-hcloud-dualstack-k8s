@@ -36,7 +36,7 @@ output "client_key_data" {
 
 output "kubeconfig" {
   description = "kubeconfig for the cluster"
-  value       = module.kubeconfig.stdout
+  value       = local.kubeconfig
   sensitive   = true
 }
 
@@ -46,8 +46,18 @@ output "join_user_data" {
   sensitive   = true
 }
 
-output "join_command" {
-  description = "kubeadm join command for additional worker nodes"
-  value       = module.join_config.stdout
+# These two are consumed by worker nodes to join. The depends_on gates them on the
+# seed having been initialised, so a worker's `kubeadm join` cannot run before the
+# API server exists -- the ordering the old join_command got implicitly.
+output "discovery_conf" {
+  description = "cluster-info kubeconfig used for kubeadm join discovery (endpoint + CA)"
+  value       = local.discovery_kubeconfig
+  depends_on  = [null_resource.control_plane_init]
+}
+
+output "worker_join_config" {
+  description = "kubeadm JoinConfiguration for worker nodes (contains the bootstrap token)"
+  value       = local.worker_join_config
   sensitive   = true
+  depends_on  = [null_resource.control_plane_init]
 }
