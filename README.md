@@ -69,18 +69,19 @@ and check the access by viewing the created cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME                  STATUS   ROLES           AGE   VERSION
-k8s-control-plane-0   Ready    control-plane   31m   v1.35.3
-k8s-worker-0          Ready    <none>          31m   v1.35.3
-k8s-worker-1          Ready    <none>          31m   v1.35.3
+k8s-control-plane-0   Ready    control-plane   31m   v1.36.1
+k8s-worker-0          Ready    <none>          31m   v1.36.1
+k8s-worker-1          Ready    <none>          31m   v1.36.1
 ```
 
 ## Supported base images
 
 The module should work on most major RPM and DEB distros. It been tested on these base images:
 
-- Ubuntu 24.04 (`ubuntu-24.04`)
+- Ubuntu 24.04 (`ubuntu-26.04`)
+- Ubuntu 26.04 (`ubuntu-26.04`)
 - Debian 13 (`debian-13`)
-- Fedora 43 (`fedora-43`)
+- Fedora 44 (`fedora-44`)
 
 Others may work as well, but have not been tested.
 
@@ -202,7 +203,7 @@ Read these notes carefully before using this module in production.
 
 In addition some caveats for dual-stack clusters in general:
 
-- `Services` are single-stack by default. Since IPv6 is the primary IP family of the clusters created with this modules, this means the `ClusterIP` will be IPv6 only, leading to issues for workloads that only bind on IPv4. Pass `ipFamilyPolicy: PreferDualStack` when creating services to assign both IPv4 and IPv6 ClusterIPs. You can use the [prefer-dual-stack-webhook](https://github.com/tibordp/prefer-dual-stack-webhook) admission controller to change the default to `PreferDualStack` for all newly creted services that don't specify IP family policy.
+- `Services` are single-stack by default. Since IPv6 is the primary IP family of the clusters created with this modules, this means the `ClusterIP` will be IPv6 only, leading to issues for workloads that only bind on IPv4. Pass `ipFamilyPolicy: PreferDualStack` when creating services to assign both IPv4 and IPv6 ClusterIPs. On clusters > 1.36, you can use [the following MutatingAdmissionPolicy](https://gist.github.com/tibordp/09de5c4e43b541dc555afff18fc71e9b) to change the default to `PreferDualStack`
 - the apiserver Service (`kubernetes.default.svc.cluster.local`) has to be single-stack, as `--apiserver-advertise-address` does not support dual-stack yet. The default address family for the cluster can be selected with `primary_ip_family` variable (defaults to `ipv6`).
 
 
