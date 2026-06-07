@@ -102,7 +102,7 @@ resource "null_resource" "control_plane_join" {
       ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
           root@${local.kubeadm_host} 'kubeadm init phase upload-certs \
             --upload-certs \
-            --certificate-key ${random_id.certificate_key.hex}'
+            --config /root/cluster.yaml'
     EOT
   }
 
