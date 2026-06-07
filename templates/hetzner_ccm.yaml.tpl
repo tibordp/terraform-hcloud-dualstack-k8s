@@ -124,6 +124,9 @@ spec:
 
         - key: "node.kubernetes.io/not-ready"
           effect: "NoExecute"
+%{ if use_hcloud_network ~}
+      hostNetwork: true
+%{ endif ~}
       containers:
         - name: hcloud-cloud-controller-manager
           args:
@@ -132,7 +135,7 @@ spec:
             - "--route-reconciliation-period=30s"
             - "--webhook-secure-port=0"
             - "--leader-elect=false"
-            - "--feature-gates=CloudControllerManagerWatchBasedRoutesReconciliation=false"
+            - "--feature-gates=CloudControllerManagerWatchBasedRoutesReconciliation=true"
 %{ if use_hcloud_network ~}
             - "--allocate-node-cidrs=true"
             - "--cluster-cidr=${pod_cidr_ipv4}"
@@ -156,7 +159,7 @@ spec:
 %{ endif ~}
             - name: HCLOUD_INSTANCES_ADDRESS_FAMILY
               value: dualstack
-          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.30.1 # x-releaser-pleaser-version
+          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.31.1 # x-releaser-pleaser-version
           ports:
             - name: metrics
               containerPort: 8233
