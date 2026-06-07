@@ -32,7 +32,7 @@ Create a simple Kubernetes cluster:
 ```hcl
 module "cluster" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "2.8.0"
+  version = "2.9.0"
 
   name           = "k8s"
   hcloud_ssh_key = hcloud_ssh_key.key.id
@@ -42,7 +42,7 @@ module "cluster" {
 
 module "worker_nodes" {
   source = "tibordp/dualstack-k8s/hcloud//modules/worker-node"
-  version = "2.8.0"
+  version = "2.9.0"
 
   cluster = module.cluster
   count  = 2
@@ -78,7 +78,7 @@ k8s-worker-1          Ready    <none>          31m   v1.36.1
 
 The module should work on most major RPM and DEB distros. It been tested on these base images:
 
-- Ubuntu 24.04 (`ubuntu-26.04`)
+- Ubuntu 24.04 (`ubuntu-24.04`)
 - Ubuntu 26.04 (`ubuntu-26.04`)
 - Debian 13 (`debian-13`)
 - Fedora 44 (`fedora-44`)
@@ -139,7 +139,7 @@ First control plane node is special in that it is used by the provisioning proce
 ```hcl
 module "k8s" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "2.8.0"
+  version = "2.9.0"
 
   ...
 
