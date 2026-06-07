@@ -106,17 +106,9 @@ resource "null_resource" "control_plane_join" {
     EOT
   }
 
-  provisioner "local-exec" {
-    command = <<EOT
-      ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${local.kubeadm_host} \
-        'echo $(kubeadm token create --print-join-command --ttl=60m) \
-        --apiserver-advertise-address ${local.advertise_addresses[count.index]} \
-        --control-plane \
-        --certificate-key ${random_id.certificate_key.hex}' | \
-      ssh -i ${var.ssh_private_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-        root@${module.control_plane[count.index].ipv4_address} 'tee /root/join-command.sh >/dev/null'
-    EOT
+  provisioner "file" {
+    content     = "${trimspace(module.join_config.stdout)} --apiserver-advertise-address ${local.advertise_addresses[count.index]} --control-plane --certificate-key ${random_id.certificate_key.hex}\n"
+    destination = "/root/join-command.sh"
   }
 
   provisioner "file" {
