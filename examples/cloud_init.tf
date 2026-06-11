@@ -35,7 +35,7 @@ module "cluster" {
 resource "hcloud_server" "instance" {
   name        = "additional-worker-node"
   ssh_keys    = [hcloud_ssh_key.key.id]
-  image       = "ubuntu-20.04"
+  image       = "ubuntu-24.04"
   location    = "hel1"
   server_type = "cpx32"
 

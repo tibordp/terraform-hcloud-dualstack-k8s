@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1.9"
+
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
@@ -31,8 +33,8 @@ resource "hcloud_server_network" "node_server_network" {
 }
 
 
-resource "null_resource" "node_join" {
-  triggers = {
+resource "terraform_data" "node_join" {
+  triggers_replace = {
     instance_id = module.node.id
   }
 

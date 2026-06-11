@@ -4,14 +4,6 @@ kind: InitConfiguration
 localAPIEndpoint:
   advertiseAddress: "${advertise_address}"
   bindPort: 6443
-bootstrapTokens:
-  - token: "${bootstrap_token}"
-    ttl: "0s"
-    usages:
-      - signing
-      - authentication
-    groups:
-      - system:bootstrappers:kubeadm:default-node-token
 ---
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration

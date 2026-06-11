@@ -24,6 +24,16 @@ variable "node_count" {
   description = "Number of control plane nodes"
   type        = number
   default     = 1
+
+  validation {
+    condition     = var.node_count >= 1
+    error_message = "At least one control plane node is required."
+  }
+
+  validation {
+    condition     = var.node_count <= 1 || var.control_plane_endpoint != "" || var.load_balancer_type != ""
+    error_message = "Set control_plane_endpoint or load_balancer_type when node_count > 1. It must be set when the cluster is first created; adding it to an existing single-node cluster does not reconfigure the running control plane."
+  }
 }
 
 variable "load_balancer_type" {
@@ -126,10 +136,44 @@ variable "kubernetes_version" {
   }
 }
 
+variable "ca_key_algorithm" {
+  description = "Key algorithm for the cluster CA and service-account signing keys: \"RSA\" or \"ECDSA\". Applied when the cluster is first created; ignored on existing clusters (the PKI is write-once)."
+  type        = string
+  default     = "RSA"
+
+  validation {
+    condition     = contains(["RSA", "ECDSA"], var.ca_key_algorithm)
+    error_message = "The ca_key_algorithm value must be \"RSA\" or \"ECDSA\"."
+  }
+}
+
+variable "ca_rsa_bits" {
+  description = "RSA key size for the PKI keys when ca_key_algorithm is \"RSA\" (default: 2048)"
+  type        = number
+  default     = 2048
+}
+
+variable "ca_ecdsa_curve" {
+  description = "ECDSA curve for the PKI keys when ca_key_algorithm is \"ECDSA\" (default: P256)"
+  type        = string
+  default     = "P256"
+}
+
+variable "ca_validity_period_hours" {
+  description = "Validity of the CA certificates in hours (default: 876000, ~100 years). The CAs are never renewed by Terraform; see caveats."
+  type        = number
+  default     = 876000
+}
+
 variable "use_hcloud_network" {
   description = "Use Hetzner private network (default: false)"
   type        = bool
   default     = false
+
+  validation {
+    condition     = !var.use_hcloud_network || (var.hcloud_network_id != "" && var.hcloud_subnet_id != "")
+    error_message = "hcloud_network_id and hcloud_subnet_id must be set when use_hcloud_network is true."
+  }
 }
 
 variable "hcloud_network_id" {

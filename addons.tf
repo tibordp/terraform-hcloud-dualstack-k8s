@@ -38,13 +38,13 @@ locals {
 # and certs), which breaks single-apply cluster creation, and the API server is
 # IPv6-primary -- the machine running Terraform may not be able to reach it, while
 # the seed always can.
-resource "null_resource" "install_addons" {
+resource "terraform_data" "install_addons" {
   depends_on = [
-    null_resource.control_plane_init
+    terraform_data.cluster_bootstrap
   ]
 
-  triggers = {
-    manifests = local.addon_manifests
+  triggers_replace = {
+    manifests_hash = sha256(local.addon_manifests)
   }
 
   connection {

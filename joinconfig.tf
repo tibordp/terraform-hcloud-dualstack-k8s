@@ -16,7 +16,7 @@ locals {
       name = ""
       cluster = {
         server                       = "https://${local.control_plane_endpoint}:6443"
-        "certificate-authority-data" = base64encode(tls_self_signed_cert.ca.cert_pem)
+        "certificate-authority-data" = base64encode(tls_self_signed_cert.ca["kubernetes"].cert_pem)
       }
     }]
   })
