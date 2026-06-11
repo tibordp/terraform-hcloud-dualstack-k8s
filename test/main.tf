@@ -61,14 +61,27 @@ module "worker_node" {
 
 # GitHub Actions runners have no IPv6 connectivity, so point each kubeconfig at
 # the cluster's IPv4 endpoint (the load balancer if there is one, node 0 otherwise).
+locals {
+  ipv4_endpoints = {
+    for name, cluster in module.cluster :
+    name => try(cluster.load_balancer.ipv4, cluster.control_plane_nodes[0].ipv4_address)
+  }
+
+  kubeconfigs = {
+    for name, cluster in module.cluster : name => yamldecode(cluster.kubeconfig)
+  }
+}
+
 output "kubeconfigs" {
   value = {
-    for name, cluster in module.cluster :
-    name => replace(
-      cluster.kubeconfig,
-      "/server: .*/",
-      "server: https://${try(cluster.load_balancer.ipv4, cluster.control_plane_nodes[0].ipv4_address)}:6443"
-    )
+    for name, kubeconfig in local.kubeconfigs :
+    name => yamlencode(merge(kubeconfig, {
+      clusters = [for c in kubeconfig.clusters : merge(c, {
+        cluster = merge(c.cluster, {
+          server = "https://${local.ipv4_endpoints[name]}:6443"
+        })
+      })]
+    }))
   }
   sensitive = true
 }
