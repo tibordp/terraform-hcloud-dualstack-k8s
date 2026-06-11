@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+CLUSTERS=(simple ha)
+
 setup_cluster() {
     # Wait for cluster addons to become available
     ./kubectl --kubeconfig "$1" wait --timeout=240s --for condition=ready $(./kubectl --kubeconfig "$1" get nodes -o name)
@@ -22,17 +24,18 @@ kubectl)
     ;;
 setup)
     terraform apply -auto-approve
-    terraform output -no-color -raw simple_cluster > simple_cluster.conf
-    terraform output -no-color -raw ha_cluster > ha_cluster.conf
 
-    setup_cluster "$(pwd)/simple_cluster.conf"
-    setup_cluster "$(pwd)/ha_cluster.conf"
+    for cluster in "${CLUSTERS[@]}"; do
+        terraform output -no-color -json kubeconfigs | jq -re --arg c "$cluster" '.[$c]' > "${cluster}.conf"
+        setup_cluster "$(pwd)/${cluster}.conf"
+    done
     ;;
 teardown)
-    # Try to delete the load-balancers and PVCs first, as they will not be to deleted otherwise.
-    # Do not fail if it fails
-    teardown_cluster "$(pwd)/simple_cluster.conf" || true
-    teardown_cluster "$(pwd)/ha_cluster.conf" || true
+    # Try to delete the load balancers and PVCs first, as they will not be deleted
+    # otherwise. Do not fail if it fails.
+    for cluster in "${CLUSTERS[@]}"; do
+        teardown_cluster "$(pwd)/${cluster}.conf" || true
+    done
 
     sleep 30
 
