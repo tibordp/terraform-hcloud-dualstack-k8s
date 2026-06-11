@@ -52,7 +52,6 @@ module "workers" {
   server_type = "cpx32"
 
   use_hcloud_network = true
-  hcloud_network_id  = hcloud_network.my_net.id
   hcloud_subnet_id   = hcloud_network_subnet.my_subnet.id
 }
 

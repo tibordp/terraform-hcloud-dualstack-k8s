@@ -19,11 +19,11 @@ install_prerequisites() {
 
     # Install prerequisites
     apt-get -qq update
-    apt-get -qq -y upgrade
-    apt-get -qq -y install apt-transport-https ca-certificates curl gnupg lsb-release ipvsadm nftables wireguard apparmor
+    apt-get -qq -y install apt-transport-https ca-certificates curl gnupg ipvsadm nftables wireguard apparmor
     curl -fsSL "https://download.docker.com/linux/$os_id/gpg" | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    install -d -m 0755 /etc/apt/keyrings
     curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${kubernetes_minor_version}/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$os_id $(lsb_release -cs) stable" \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/$os_id $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
       >/etc/apt/sources.list.d/docker.list
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kubernetes_minor_version}/deb/ /" \
       >/etc/apt/sources.list.d/kubernetes.list
@@ -32,9 +32,6 @@ install_prerequisites() {
     apt-get -qq update
     apt-get -qq -y install containerd.io
   else
-    # Install prerequisites
-    dnf -qy upgrade
-
     cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
@@ -70,16 +67,18 @@ EOF
 
 configure_system() {
   # Disable SELinux, if it is enabled
-  if [ -x "$(command -v getenforce)" ] && [ "$(getenforce)" != "Permissive" ]; then
+  if [ -x "$(command -v getenforce)" ] && [ "$(getenforce)" = "Enforcing" ]; then
     setenforce 0
     sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
   fi
 
   # Disable swap
-  if grep -q '/dev/zram0' /proc/swaps; then
+  swapoff -a
+  sed -i -E '/\sswap\s/ s/^#?/#/' /etc/fstab
+
+  if [ -e /dev/zram0 ]; then
     # https://fedoraproject.org/wiki/Changes/SwapOnZRAM
     touch /etc/systemd/zram-generator.conf
-    swapoff /dev/zram0
     zramctl --reset /dev/zram0
   fi
 
@@ -106,12 +105,10 @@ EOF
 }
 
 configure_containerd() {
-  # Enable systemd cgroups driver
+  # Configure containerd to use the systemd cgroup driver
   mkdir -p /etc/containerd
-  containerd config default | \
-    grep -v 'SystemdCgroup' | \
-    sed -re 's/(\s+)(\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\])/\1\2\n\1  SystemdCgroup = true/g' \
-      > /etc/containerd/config.toml
+  containerd config default >/etc/containerd/config.toml
+  sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 }
 
 install_kubernetes() {
@@ -141,39 +138,7 @@ install_kubernetes() {
   fi
 }
 
-configure_wigglenet() {
-  # Determine the IPv6 pod subnet based on the /64 assigned to eth0 interface (take 2nd /80)
-  mkdir -p /etc/wigglenet
-  python3 <<'EOF'
-import re
-import os
-import ipaddress
-import itertools
-import sys
-
-try:
-  addrs = os.popen("ip -6 addr show eth0 scope global").read()
-  match = re.search(r"inet6 ([^ ]+/64) scope global", addrs, re.MULTILINE)
-  if not match:
-    print("Error: No IPv6 /64 address found on eth0", file=sys.stderr)
-    sys.exit(1)
-
-  addr = match.group(1)
-  net = ipaddress.IPv6Network(addr, strict=False)
-  pod_subnet = next(itertools.islice(net.subnets(16), 1, None))
-
-  with open("/etc/wigglenet/cidrs.txt", "w") as f:
-    f.write(str(pod_subnet) + "\n")
-
-  print(f"Pod CIDR is {pod_subnet}")
-except Exception as e:
-  print(f"Error configuring wigglenet: {e}", file=sys.stderr)
-  sys.exit(1)
-EOF
-}
-
 install_prerequisites
 configure_system
 configure_containerd
 install_kubernetes
-configure_wigglenet

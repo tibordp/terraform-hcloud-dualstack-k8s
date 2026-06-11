@@ -36,18 +36,29 @@ output "client_key_data" {
 
 output "kubeconfig" {
   description = "kubeconfig for the cluster"
-  value       = module.kubeconfig.stdout
+  value       = local.kubeconfig
   sensitive   = true
 }
 
+# Consumed by worker nodes to join. depends_on gates them on bootstrap_token (which
+# follows the seed init), so a worker cannot kubeadm join before the API server
+# exists and the token is in the cluster.
 output "join_user_data" {
   description = "cloud-init user data for additional worker nodes"
   value       = data.cloudinit_config.join_config.rendered
   sensitive   = true
+  depends_on  = [terraform_data.bootstrap_token]
 }
 
-output "join_command" {
-  description = "kubeadm join command for additional worker nodes"
-  value       = module.join_config.stdout
+output "discovery_conf" {
+  description = "cluster-info kubeconfig used for kubeadm join discovery (endpoint + CA)"
+  value       = local.discovery_kubeconfig
+  depends_on  = [terraform_data.bootstrap_token]
+}
+
+output "worker_join_config" {
+  description = "kubeadm JoinConfiguration for worker nodes (contains the bootstrap token)"
+  value       = local.worker_join_config
   sensitive   = true
+  depends_on  = [terraform_data.bootstrap_token]
 }

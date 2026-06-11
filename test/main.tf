@@ -7,8 +7,9 @@ terraform {
   }
 }
 
-
-variable "hetzner_token" {}
+variable "hetzner_token" {
+  type = string
+}
 
 provider "hcloud" {
   token = var.hetzner_token
@@ -19,70 +20,68 @@ resource "hcloud_ssh_key" "key" {
   public_key = file("~/.ssh/id_rsa.pub")
 }
 
-module "simple_cluster" {
-  source = "./.."
-
-  name           = "simple"
-  hcloud_ssh_key = hcloud_ssh_key.key.id
-  hcloud_token   = var.hetzner_token
-  location       = "hel1"
-  server_type    = "cpx22"
+locals {
+  clusters = {
+    simple = {
+      node_count         = 1
+      load_balancer_type = ""
+    }
+    ha = {
+      node_count         = 2
+      load_balancer_type = "lb11"
+    }
+  }
 }
 
-module "simple_worker_node" {
-  source = "./../modules/worker-node"
+module "cluster" {
+  source   = "./.."
+  for_each = local.clusters
 
-  cluster = module.simple_cluster
-
-  name           = "simple-worker"
-  hcloud_ssh_key = hcloud_ssh_key.key.id
-  location       = "hel1"
-
-  server_type = "cpx22"
-}
-
-module "ha_cluster" {
-  source = "./.."
-
-  name           = "ha"
+  name           = each.key
   hcloud_ssh_key = hcloud_ssh_key.key.id
   hcloud_token   = var.hetzner_token
   location       = "hel1"
   server_type    = "cpx22"
 
-  load_balancer_type = "lb11"
-
-  node_count = 2
+  node_count         = each.value.node_count
+  load_balancer_type = each.value.load_balancer_type
 }
 
-module "ha_worker_node" {
-  source = "./../modules/worker-node"
+module "worker_node" {
+  source   = "./../modules/worker-node"
+  for_each = module.cluster
 
-  cluster = module.ha_cluster
+  cluster = each.value
 
-  name           = "ha-worker"
+  name           = "${each.key}-worker"
   hcloud_ssh_key = hcloud_ssh_key.key.id
   location       = "hel1"
-
-  server_type = "cpx22"
+  server_type    = "cpx22"
 }
 
+# GitHub Actions runners have no IPv6 connectivity, so point each kubeconfig at
+# the cluster's IPv4 endpoint (the load balancer if there is one, node 0 otherwise).
+locals {
+  ipv4_endpoints = {
+    for name, cluster in module.cluster :
+    name => try(cluster.load_balancer.ipv4, cluster.control_plane_nodes[0].ipv4_address)
+  }
 
-# GitHub Actions does not support IPv6 connectivity, so we need to hack the server endpoints
-output "simple_cluster" {
-  value = replace(
-    module.simple_cluster.kubeconfig,
-    "/server: .*/",
-    "server: https://${module.simple_cluster.control_plane_nodes[0].ipv4_address}:6443"
-  )
-  sensitive = true
+  kubeconfigs = {
+    for name, cluster in module.cluster : name => yamldecode(cluster.kubeconfig)
+  }
 }
 
-output "ha_cluster" {
-  value = replace(
-    module.ha_cluster.kubeconfig,
-    "/server: .*/",
-    "server: https://${module.ha_cluster.load_balancer.ipv4}:6443"
-  )
+output "kubeconfigs" {
+  value = {
+    for name, kubeconfig in local.kubeconfigs :
+    name => yamlencode(merge(kubeconfig, {
+      clusters = [for c in kubeconfig.clusters : merge(c, {
+        cluster = merge(c.cluster, {
+          server = "https://${local.ipv4_endpoints[name]}:6443"
+        })
+      })]
+    }))
+  }
   sensitive = true
 }

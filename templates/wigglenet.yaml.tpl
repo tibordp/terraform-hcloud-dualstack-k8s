@@ -11,7 +11,7 @@ rules:
       - get
       - list
       - watch
-      - update
+      - patch
   - apiGroups:
       - ""
     resources:
@@ -71,7 +71,7 @@ spec:
       serviceAccountName: wigglenet
       containers:
       - name: wigglenet
-        image: ghcr.io/tibordp/wigglenet:v0.6.1
+        image: ghcr.io/tibordp/wigglenet:v0.7.0
         imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME
@@ -94,18 +94,21 @@ spec:
           # outside the cluster
         - name: FILTER_IPV6
           value: "${filter_pod_ingress_ipv6}"
-          # The source of IPv6 subnets for node pod networks
+          # The source of IPv4 subnets for node pod networks
           # ("none", "spec", "file")
         - name: POD_CIDR_SOURCE_IPV4
           value: "spec"
-          # The source of IPv4 subnets for node pod networks
-          # ("none", "spec", "file")
+          # The source of IPv6 subnets for node pod networks
+          # ("none", "spec", "file", "expression")
         - name: POD_CIDR_SOURCE_IPV6
-          value: "file"
-          # The file from which to read the pod CIDRs if "file"
-          # mode is used
-        - name: POD_CIDR_SOURCE_PATH
-          value: "/etc/wigglenet/cidrs.txt"
+          value: "expression"
+          # CEL expression evaluated per node to derive the IPv6 pod CIDR:
+          # the second /80 of the routed /64 on eth0.
+        - name: POD_CIDR_EXPRESSION
+          value: |
+            interfaces["eth0"]
+              .filter(p, p.ip().family() == 6 && p.prefixLength() == 64)[0]
+              .subnet(80, 1)
           # Use native routing instead of the overlay network
           # for IPv4 traffic
         - name: NATIVE_ROUTING_IPV4

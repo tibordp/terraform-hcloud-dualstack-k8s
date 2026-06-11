@@ -63,16 +63,15 @@ variable "use_hcloud_network" {
   description = "Use Hetzner private network (default: false)"
   type        = bool
   default     = false
-}
 
-variable "hcloud_network_id" {
-  description = "(Optional) Hetzner private network ID"
-  type        = string
-  default     = ""
+  validation {
+    condition     = !var.use_hcloud_network || var.hcloud_subnet_id != ""
+    error_message = "hcloud_subnet_id must be set when use_hcloud_network is true."
+  }
 }
 
 variable "hcloud_subnet_id" {
-  description = "(Optional) Hetzner private network ID"
+  description = "(Optional) Hetzner private network subnet ID"
   type        = string
   default     = ""
 }
