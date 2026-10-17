@@ -32,7 +32,7 @@ Create a simple Kubernetes cluster:
 ```hcl
 module "cluster" {
   source  = "tibordp/dualstack-k8s/hcloud"
-  version = "3.0.0"
+  version = "3.1.0"
 
   name           = "k8s"
   hcloud_ssh_key = hcloud_ssh_key.key.id
@@ -42,7 +42,7 @@ module "cluster" {
 
 module "worker_nodes" {
   source  = "tibordp/dualstack-k8s/hcloud//modules/worker-node"
-  version = "3.0.0"
+  version = "3.1.0"
 
   cluster = module.cluster
   count   = 2
