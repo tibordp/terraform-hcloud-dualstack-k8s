@@ -71,7 +71,7 @@ spec:
       serviceAccountName: wigglenet
       containers:
       - name: wigglenet
-        image: ghcr.io/tibordp/wigglenet:v0.7.0
+        image: ghcr.io/tibordp/wigglenet:v0.8.0
         imagePullPolicy: IfNotPresent
         env:
         - name: NODE_NAME
@@ -139,6 +139,10 @@ spec:
           limits:
             cpu: "100m"
             memory: "50Mi"
+        readinessProbe:
+          exec:
+            command: ["test", "-e", "/run/wigglenet-ready"]
+          periodSeconds: 10
         securityContext:
           privileged: false
           capabilities:

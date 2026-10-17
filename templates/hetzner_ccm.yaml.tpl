@@ -105,6 +105,12 @@ spec:
         app: hcloud-cloud-controller-manager
     spec:
       serviceAccountName: hcloud-cloud-controller-manager
+      securityContext:
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
       dnsPolicy: Default
       tolerations:
         # Allow HCCM itself to schedule on nodes that have not yet been initialized by HCCM.
@@ -129,6 +135,12 @@ spec:
 %{ endif ~}
       containers:
         - name: hcloud-cloud-controller-manager
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
           args:
             - "--allow-untagged-cloud"
             - "--cloud-provider=hcloud"
@@ -159,7 +171,7 @@ spec:
 %{ endif ~}
             - name: HCLOUD_INSTANCES_ADDRESS_FAMILY
               value: dualstack
-          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.31.1 # x-releaser-pleaser-version
+          image: docker.io/hetznercloud/hcloud-cloud-controller-manager:v1.39.0 # x-releaser-pleaser-version
           ports:
             - name: metrics
               containerPort: 8233
