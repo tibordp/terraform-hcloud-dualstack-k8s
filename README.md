@@ -69,9 +69,9 @@ and check access by listing the cluster nodes:
 ```cmd
 $ kubectl get nodes --kubeconfig=kubeconfig.conf
 NAME                  STATUS   ROLES           AGE   VERSION
-k8s-control-plane-0   Ready    control-plane   31m   v1.36.1
-k8s-worker-0          Ready    <none>          31m   v1.36.1
-k8s-worker-1          Ready    <none>          31m   v1.36.1
+k8s-control-plane-0   Ready    control-plane   31m   v1.37.1
+k8s-worker-0          Ready    <none>          31m   v1.37.1
+k8s-worker-1          Ready    <none>          31m   v1.37.1
 ```
 
 ## Supported base images
